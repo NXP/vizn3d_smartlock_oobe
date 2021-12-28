@@ -1,0 +1,4 @@
+*startup_*.o (.rodata .rodata.* .constdata .constdata.*) /*Put const DATA in startup file here  */
+*(EXCLUDE_FILE(*.a: *.o) .rodata*) /*Exclude all other rodata sections*/
+*(EXCLUDE_FILE(*.a: *.o) .constdata*) /*Exclude all other constdata sections*/
+. = ALIGN(${text_align});

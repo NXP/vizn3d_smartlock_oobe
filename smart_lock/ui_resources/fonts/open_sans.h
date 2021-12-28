@@ -9,7 +9,7 @@
 #ifndef __OPENSANS_H
 #define __OPENSANS_H
 
-#include <fonts/d4d_font.h>
+#include <ui_resources/fonts/d4d_font.h>
 
 extern const D4D_FONT_DESCRIPTOR d4dfnt_OpenSans16_desc;
 extern const D4D_FONT_DESCRIPTOR d4dfnt_OpenSans8_desc;

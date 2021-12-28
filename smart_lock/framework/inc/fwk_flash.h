@@ -58,7 +58,7 @@ sln_flash_status_t FWK_Flash_Save(const char *path, void *buf, unsigned int size
  * @param overwrite Boolean parameter. If true the existing file will be truncated. Similar to SLN_flash_save
  * @return the status of append operation
  */
-sln_flash_status_t FWK_Flash_Append(const char *path, void *buf, unsigned int size,  bool overwrite);
+sln_flash_status_t FWK_Flash_Append(const char *path, void *buf, unsigned int size, bool overwrite);
 
 /**
  * @brief Read from a file

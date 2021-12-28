@@ -360,7 +360,7 @@ _Pragma("diag_suppress=Pm120")
 #define USB_LINK_USB_GLOBAL_BSS
 #define USB_LINK_USB_BDT_BSS
 #define USB_LINK_DMA_NONINIT_DATA      __attribute__((section("m_usb_dma_noninit_data, \"aw\", %nobits @")))
-#define USB_LINK_NONCACHE_NONINIT_DATA __attribute__((section("NonCacheable, \"aw\", %nobits @")))
+#define USB_LINK_NONCACHE_NONINIT_DATA __attribute__((section("NonCacheable2, \"aw\", %nobits @")))
 
 #elif (defined(__DSC__) && defined(__CW__))
 #define MAX(a, b)                    (((a) > (b)) ? (a) : (b))

@@ -278,13 +278,12 @@ status_t flexspi_nor_flash_init(FLEXSPI_Type *base)
     FLEXSPI_SetFlashConfig(base, &deviceconfig, kFLEXSPI_PortA1);
 
     /* Update LUT table. */
-    FLEXSPI_UpdateLUT(base, 0, customLUT, CUSTOM_LUT_LENGTH);
+    FLEXSPI_UpdateLUT(FLEXSPI, 0, customLUT, CUSTOM_LUT_LENGTH);
 
     /* Enter quad mode. */
     status = flexspi_nor_enable_quad_mode(base);
 
     /* Do software reset. */
     FLEXSPI_SoftwareReset(base);
-
     return status;
 }

@@ -12,6 +12,8 @@
 #include "sln_flash_ops.h"
 #include "fsl_flexspi.h"
 
+extern const uint32_t customLUT[CUSTOM_LUT_LENGTH];
+
 #ifdef __REDLIB__
 size_t safe_strlen(const char *ptr, size_t max)
 {

@@ -1,1 +1,4 @@
-        *(EXCLUDE_FILE(*flexspi_nor_flash_ops.o *fsl_flexspi.o *sln_flash.o *libsln_afe.a: *liboasis_lite2D_DEFAULT_117f_ae.a: *liboasis_lite3D_DEFAULT_117f_ae.a:) .text*)
+*system_*.o (.text.SystemInit*) /*Function SystemInit and SystemInitHook must be put in flash*/
+*_flexram_allocate.o (.text*) /*Function FLEXRAM_AllocateRam must be put in flash*/
+*startup_*.o  (.text.map_flexram) /*Function map_flexram must be put in flash*/
+*(EXCLUDE_FILE(*.a: *.o) .text*) /*Exclude all other text sections*/

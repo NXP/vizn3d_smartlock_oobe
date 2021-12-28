@@ -21,6 +21,9 @@
 #define OBU1S_Write(handle, reg, size, value)                                                    \
     VIDEO_I2C_WriteReg(OBU1S_I2C_ADDR, kVIDEO_RegAddr16Bit, reg, (video_reg_width_t)size, value, \
                        ((obU1S_resource_t *)(handle->resource))->i2cSendFunc)
+#define OBU1S_WriteM(handle, reg, len, value)                                      \
+    VIDEO_I2C_WriteMultiRegs(OBU1S_I2C_ADDR, kVIDEO_RegAddr16Bit, reg, len, value, \
+                             ((obU1S_resource_t *)(handle->resource))->i2cSendFunc)
 #define OBU1S_Read(handle, reg, size, value)                                                    \
     VIDEO_I2C_ReadReg(OBU1S_I2C_ADDR, kVIDEO_RegAddr16Bit, reg, (video_reg_width_t)size, value, \
                       ((obU1S_resource_t *)(handle->resource))->i2cReceiveFunc)
@@ -46,6 +49,8 @@ typedef enum _obU1S_stream_type
 #define OBU1S_REG_STREAM    0x0018
 #define OBU1S_REG_DEPTH_RES 0x0033
 #define OBU1S_REG_IR_RES    0x005b
+#define OBU1S_REG_FACE_AE   0xF280
+#define OBU1S_REG_GLOBAL_AE 0xF220
 
 /*******************************************************************************
  * Prototypes
@@ -55,18 +60,20 @@ status_t OBU1S_Deinit(camera_device_handle_t *handle);
 status_t OBU1S_Start(camera_device_handle_t *handle);
 status_t OBU1S_Stop(camera_device_handle_t *handle);
 status_t OBU1S_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd, int32_t arg);
+status_t OBU1S_ControlExt(camera_device_handle_t *handle, camera_device_cmd_t cmd, const void *specialArg);
 status_t OBU1S_InitExt(camera_device_handle_t *handle, const camera_config_t *config, const void *specialConfig);
 
 /*******************************************************************************
  * Variables
  ******************************************************************************/
 const camera_device_operations_t obU1S_ops = {
-    .init     = OBU1S_Init,
-    .deinit   = OBU1S_Deinit,
-    .start    = OBU1S_Start,
-    .stop     = OBU1S_Stop,
-    .control  = OBU1S_Control,
-    .init_ext = OBU1S_InitExt,
+    .init        = OBU1S_Init,
+    .deinit      = OBU1S_Deinit,
+    .start       = OBU1S_Start,
+    .stop        = OBU1S_Stop,
+    .control     = OBU1S_Control,
+    .control_ext = OBU1S_ControlExt,
+    .init_ext    = OBU1S_InitExt,
 };
 
 static obU1S_stream_type_t s_SteamType = obU1S_stream_ir_depth_interlace;
@@ -147,6 +154,40 @@ static status_t OBU1S_StreamControl(camera_device_handle_t *handle, obU1S_stream
     }
 
     status = OBU1S_Write(handle, OBU1S_REG_STREAM, kVIDEO_RegWidth8Bit, value);
+    return status;
+}
+
+/*!
+ * @brief Set FaceAE of OBU1S camera.
+ *
+ * @param handle Handle to the camera pointer.
+ * @param faceRect face position
+ * @return Returns @ref kStatus_Success if success, otherwise returns error code.
+ */
+static status_t OBU1S_SetFaceAE(camera_device_handle_t *handle, uint16_t *faceRect)
+{
+    status_t status;
+    uint16_t mapFacePos[4];
+    // Map to 1080 x 1280 resolution.
+    for (int i = 0; i < sizeof(mapFacePos) / sizeof(mapFacePos[0]); i++)
+    {
+        mapFacePos[i] = faceRect[i] << 1;
+    }
+    status = OBU1S_WriteM(handle, OBU1S_REG_FACE_AE, sizeof(mapFacePos), (uint8_t *)mapFacePos);
+    return status;
+}
+
+/*!
+ * @brief Set GlobalAE of OBU1S camera.
+ *
+ * @param handle Handle to the camera pointer.
+ * @param enbale enable or disable global AE function.
+ * @return Returns @ref kStatus_Success if success, otherwise returns error code.
+ */
+static status_t OBU1S_SetGlobalAE(camera_device_handle_t *handle, uint8_t enable)
+{
+    status_t status;
+    status = OBU1S_Write(handle, OBU1S_REG_GLOBAL_AE, kVIDEO_RegWidth8Bit, enable);
     return status;
 }
 
@@ -285,6 +326,31 @@ status_t OBU1S_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd, 
         status = OBU1S_StreamControl(handle, (obU1S_stream_type_t)arg);
     }
 
+    return status;
+}
+
+/*!
+ * @brief Control OBU1S sensor in extension.
+ *
+ * @param handle Handle to the camera pointer.
+ * @param cmd  Camera deice cmd.
+ * @param specialArg Pointer to the arg for deivce cmd.
+ * @return Allways returns @ref kStatus_Success.
+ */
+status_t OBU1S_ControlExt(camera_device_handle_t *handle, camera_device_cmd_t cmd, const void *specialArg)
+{
+    status_t status = kStatus_Success;
+    if (specialArg != NULL)
+    {
+        if (cmd == k3DCAMERA_SetFaceAE)
+        {
+            status = OBU1S_SetFaceAE(handle, (uint16_t *)specialArg);
+        }
+        else if (cmd == k3DCAMERA_SetGlobalAE)
+        {
+            status = OBU1S_SetGlobalAE(handle, *((uint8_t *)specialArg));
+        }
+    }
     return status;
 }
 

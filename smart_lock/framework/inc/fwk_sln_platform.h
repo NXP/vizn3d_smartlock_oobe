@@ -34,7 +34,7 @@ extern "C" {
 #define SLN_MALLOC pvPortMalloc
 #define SLN_FREE   vPortFree
 
-#define FWKDATA  __attribute__((section(".bss.$SRAM_DTC_cm7,\"aw\",%nobits @")))
+#define FWKDATA __attribute__((section(".bss.$SRAM_DTC_cm7,\"aw\",%nobits @")))
 /*
  * Get the current time in us
  */

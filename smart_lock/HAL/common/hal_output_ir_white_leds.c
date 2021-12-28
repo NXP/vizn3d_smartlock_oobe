@@ -11,7 +11,7 @@
  * @brief LED HAL output device implementation. Controls the FlexPWM settings for both the IR and white LEDs.
  */
 
-#include "board_define.h"
+#include "app_config.h"
 
 #include "FreeRTOS.h"
 #include "board.h"
@@ -21,7 +21,7 @@
 #include "hal_event_descriptor_common.h"
 #include "hal_output_dev.h"
 #include "hal_smart_lock_config.h"
-#include "hal_vision_algo_oasis_lite.h"
+#include "hal_vision_algo.h"
 
 #include "fsl_pwm.h"
 #include "fsl_xbara.h"

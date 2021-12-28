@@ -16,9 +16,9 @@
 
 #include <stddef.h>
 
-#include "hal_vision_algo_oasis_lite.h"
+#include "hal_vision_algo.h"
 #include "fwk_sln_config.h"
-#include "board_define.h"
+#include "app_config.h"
 #if defined(ENABLE_VOICE)
 #include "hal_voice_algo_asr_local.h"
 #endif
@@ -30,7 +30,8 @@ typedef struct _smart_lock_config
     uint8_t whitePwm;  /* brightness % (0-100) */
     uint8_t sleepMode; /* detect no face timeout sleep */
     uint32_t speakerVolume;
-    uint8_t password[6]; /* device password */
+    uint8_t password[6];       /* device password */
+    uint32_t faceRecThreshold; /* % (0 - 1000); face rec threshold = faceRecThreshold * 1.0 / 1000 */
 #if defined(ENABLE_VOICE)
     asr_voice_config_t asrConfig;
 #endif
@@ -53,6 +54,8 @@ uint32_t HAL_OutputDev_SmartLockConfig_GetSpeakerVolume();
 hal_config_status_t HAL_OutputDev_SmartLockConfig_SetSpeakerVolume(uint32_t speakerVolume);
 uint8_t HAL_OutputDev_SmartLockConfig_GetSleepMode();
 hal_config_status_t HAL_OutputDev_SmartLockConfig_SetSleepMode(uint8_t sleepMode);
+hal_config_status_t HAL_OutputDev_SmartLockConfig_GetFaceRecThreshold(unsigned int *pThreshold);
+hal_config_status_t HAL_OutputDev_SmartLockConfig_SetFaceRecThreshold(unsigned int threshold);
 
 /* Temporary fix */
 /* TODO: Remove this Define */

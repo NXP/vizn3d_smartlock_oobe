@@ -15,8 +15,9 @@
 #define TC358748_DelayMs(ms) VIDEO_DelayMs(ms)
 #define TC358748_Write(reg, size, value, i2cSendFunc) \
     VIDEO_I2C_WriteReg(TC358748_I2C_SLAVE_ADDR, kVIDEO_RegAddr16Bit, reg, (video_reg_width_t)size, value, i2cSendFunc)
-#define TC358748_Read(reg, size, value, i2cReceiveFunc) \
-    VIDEO_I2C_ReadReg(TC358748_I2C_SLAVE_ADDR, kVIDEO_RegAddr16Bit, reg, (video_reg_width_t)size, value, i2cReceiveFunc)
+#define TC358748_Read(reg, size, value, i2cReceiveFunc)                                                    \
+    VIDEO_I2C_ReadReg(TC358748_I2C_SLAVE_ADDR, kVIDEO_RegAddr16Bit, reg, (video_reg_width_t)size, value, \
+                      i2cReceiveFunc)
 
 typedef struct _tc358748_reg
 {
@@ -46,12 +47,17 @@ typedef struct _tc358748_reg
  * Variables
  ******************************************************************************/
 static const tc358748_reg_t tc358748_settings[] = {
-    {TC358748_REG_SYSTEM_CONTROL, 2, 0x0001, 2, 1},      {TC358748_REG_SYSTEM_CONTROL, 2, 0x0000, 2, 0},
-    {TC358748_REG_PLL_CONTROL0, 2, 0x105d, 2, 0},        {TC358748_REG_PLL_CONTROL1, 2, 0x0c13, 2, 0},
-    {TC358748_REG_CLK_CONTROL, 2, 0x0022, 2, 0},         {TC358748_REG_MCLK_CONTROL, 2, 0x0101, 2, 0},
-    {TC358748_REG_MIPI_PHY_TIME, 2, 0x800a, 2, 0},       {TC358748_REG_FIFO_CONTROL, 2, 0x0020, 2, 0},
-    {TC358748_REG_DATA_FORMAT_CONTROL, 2, 0x0060, 2, 0}, // raw 12
-    {TC358748_REG_CONFIG_CONTROL, 2, 0x8145, 2, 0},      // 2xlanes
+    {TC358748_REG_SYSTEM_CONTROL, 2, 0x0001, 2, 1},
+    {TC358748_REG_SYSTEM_CONTROL, 2, 0x0000, 2, 0},
+    {TC358748_REG_PLL_CONTROL0, 2, 0x105d, 2, 0},
+//    {TC358748_REG_PLL_CONTROL1, 2, 0x0c03, 2, 1000},
+    {TC358748_REG_PLL_CONTROL1, 2, 0x0c13, 2, 0},
+    {TC358748_REG_CLK_CONTROL, 2, 0x0022, 2, 0},
+    {TC358748_REG_MCLK_CONTROL, 2, 0x0101, 2, 0},
+    {TC358748_REG_MIPI_PHY_TIME, 2, 0x800a, 2, 0},
+    {TC358748_REG_FIFO_CONTROL, 2, 0x0020, 2, 0},
+    {TC358748_REG_DATA_FORMAT_CONTROL, 2, 0x0060, 2, 0},//raw 12
+    {TC358748_REG_CONFIG_CONTROL, 2, 0x8145, 2, 0},//2xlanes
 };
 
 static tc358748_resource_t *s_pTc358748Resource = NULL;
@@ -125,9 +131,8 @@ status_t TC358748_SleepControl(tc358748_work_mode_t mode)
 void TC358748_DeInit(void)
 {
     if (s_pTc358748Resource->pullPowerEnablePin)
-    {
         s_pTc358748Resource->pullPowerEnablePin(false);
-    }
+
     if (s_pTc358748Resource->pullResetPin)
     {
         s_pTc358748Resource->pullResetPin(false);

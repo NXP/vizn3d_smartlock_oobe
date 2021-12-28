@@ -1,0 +1,62 @@
+<resources>
+    <!-- General -->
+
+    <dimen name="application_title_text_size">18sp</dimen>
+
+    <!--Heart Rate Chart text Size-->
+    <dimen name="heart_rate_chart_text_size">9sp</dimen>
+
+    <!-- Blood Pressure -->
+    <dimen name="bpm_category_textsize">18sp</dimen>
+    <dimen name="bpm_title_textsize">20sp</dimen>
+    <dimen name="bpm_value_textsize">22sp</dimen>
+    <dimen name="bpm_time_textsize">20dp</dimen>
+    <dimen name="bp_padding_left">15dp</dimen>
+    <dimen name="bp_padding_right">25dp</dimen>
+
+    <!-- Proximity -->
+    <dimen name="proximity_label_text_size">24sp</dimen>
+    <dimen name="proximity_value_text_size">30sp</dimen>
+    <dimen name="proximity_unit_text_size">18sp</dimen>
+    <dimen name="proximity_alertLevel_value_text_size">26sp</dimen>
+    <dimen name="proximity_alertLevel_button_text_size">22sp</dimen>
+
+    <!-- Glucose -->
+    <dimen name="glu_button_padding">5dp</dimen>
+    <dimen name="glu_button_text_size">26sp</dimen>
+    <dimen name="glu_text_size">22sp</dimen>
+    <dimen name="glu_btn_margin">20dp</dimen>
+    <dimen name="glu_textview_margin_top">30dp</dimen>
+
+    <!--Cycling Button OK text Size-->
+    <dimen name="cycling_positive_button_text_size">15sp</dimen>
+    <dimen name="cycling_title_text_size">18sp</dimen>
+
+    <!-- OTAP -->
+    <dimen name="otap_textsize">16sp</dimen>
+    <dimen name="otap_textsize_detail">14sp</dimen>
+
+    <!-- FRDM Buzzer -->
+    <dimen name="buzzer_size">150dp</dimen>
+    <!-- FRDM -->
+    <dimen name="menu_size">17dp</dimen>
+    <dimen name="menu_padding_size">5dp</dimen>
+    <!-- FRDM Potentiometer -->
+    <dimen name="text_size">30sp</dimen>
+    <dimen name="potentiometer_padding_text">30dp</dimen>
+    <dimen name="potentiometer_padding">50dp</dimen>
+    <dimen name="potentiometer_margin_bottom">150dp</dimen>
+
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <dimen name="corner_radius">12dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="text_margin">16dp</dimen>
+
+    <dimen name="action_bar_size">250dp</dimen>
+    <dimen name="fab_size">50dp</dimen>
+    <dimen name="icon_size">34dp</dimen>
+    <dimen name="toolbar_size">200dp</dimen>
+    <dimen name="tab_layout_height">42dp</dimen>
+</resources>

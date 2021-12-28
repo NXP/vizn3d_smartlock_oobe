@@ -8,7 +8,7 @@
  */
 
 #include "stdint.h"
-#include "hal_vision_algo_oasis_lite.h"
+#include "hal_vision_algo.h"
 #include "hal_smart_lock_config.h"
 #include "hal_event_descriptor_face_rec.h"
 
@@ -75,160 +75,163 @@
 #include "hal_output_dev.h"
 #include "fwk_log.h"
 
+static bool s_BleIsFirstInteraction = true;
+
 static oasis_lite_state_t s_OasisLiteState = kOASISLiteState_Count;
 #if HEADLESS_ENABLE
 static oasis_lite_headless_reg_process_t s_HeadlessRegStatus = OASIS_LITE_HEADLESS_REG_START;
 #endif
 
-static void _Vision_InferCompleteDecode(oasis_lite_result_t inferResult, void const **audio, uint32_t *len)
+static void _Vision_InferCompleteDecode(vision_algo_result_t *pInferResult, void const **audio, uint32_t *len)
 {
-    uint32_t result = inferResult.result;
-    *audio          = NULL;
-    *len            = 0;
+    *audio = NULL;
+    *len   = 0;
 
-    /* check the fake face alert */
-    if (inferResult.qualityCheck == kOasisLiteQualityCheck_FakeFace)
+    if ((pInferResult != NULL) && (pInferResult->id == kVisionAlgoID_OasisLite))
     {
-        *audio = fake_face_audio;
-        *len   = FAKE_FACE_AUDIO_LEN;
-    }
-    /* check the non frontal alert */
-    else if ((inferResult.qualityCheck == kOasisLiteQualityCheck_NonFrontalFace)
-#if HEADLESS_ENABLE
-             && (inferResult.headless_reg_status == OASIS_LITE_HEADLESS_REG_FRONT_FACE)
-#endif
-    )
-    {
-        *audio = look_at_the_camera_audio;
-        *len   = LOOK_AT_THE_CAMERA_AUDIO_LEN;
-    }
+        oasis_lite_result_t *pOasisResult = &(pInferResult->oasisLite);
+        uint32_t result                   = pOasisResult->result;
 
-    switch (inferResult.state)
-    {
-        case kOASISLiteState_Recognition:
+        /* check the fake face alert */
+        if (pOasisResult->qualityCheck == kOasisLiteQualityCheck_FakeFace)
         {
-            switch (result)
-            {
-                case kOASISLiteRecognitionResult_Success:
-                {
-                    *audio = recognition_successful_audio;
-                    *len   = RECOGNITION_SUCCESSFUL_AUDIO_LEN;
-                }
-                break;
-                case kOASISLiteRecognitionResult_Timeout:
-                {
-                    unsigned int totalUsageCount;
-                    FWK_LpmManager_RequestStatus(&totalUsageCount);
-                    if (totalUsageCount == 0)
-                    {
-                        *audio = recognition_failed_audio;
-                        *len   = RECOGNITION_FAILED_AUDIO_LEN;
-                    }
-                }
-                break;
-
-                default:
-                {
-                }
-                break;
-            }
+            *audio = fake_face_audio;
+            *len   = FAKE_FACE_AUDIO_LEN;
         }
-        break;
-        case kOASISLiteState_Registration:
-            switch (result)
+        /* check the non frontal alert */
+        else if (pOasisResult->qualityCheck == kOasisLiteQualityCheck_NonFrontalFace)
+        {
+            *audio = look_at_the_camera_audio;
+            *len   = LOOK_AT_THE_CAMERA_AUDIO_LEN;
+        }
+
+        switch (pOasisResult->state)
+        {
+            case kOASISLiteState_Recognition:
             {
-                case kOASISLiteRegistrationResult_Invalid:
-                    if (s_OasisLiteState != kOASISLiteState_Registration)
-                    {
-                        *audio = starting_registration_audio;
-                        *len   = STARTING_REGISTRATION_AUDIO_LEN;
-                    }
-                    break;
-                case kOASISLiteRegistrationResult_Success:
-                    *audio = registration_successful_audio;
-                    *len   = REGISTRATION_SUCCESSFUL_AUDIO_LEN;
-                    break;
-
-                case kOASISLiteRegistrationResult_Duplicated:
-                    *audio = registration_failed_audio;
-                    *len   = REGISTRATION_FAILED_AUDIO_LEN;
-                    break;
-
-                case kOASISLiteRegistrationResult_Timeout:
-                    *audio = registration_failed_audio;
-                    *len   = REGISTRATION_FAILED_AUDIO_LEN;
-                    break;
-                default:
+                switch (result)
                 {
-                }
-            }
-
-#if HEADLESS_ENABLE
-            if (s_HeadlessRegStatus != inferResult.headless_reg_status)
-            {
-                switch (inferResult.headless_reg_status)
-                {
-                    case OASIS_LITE_HEADLESS_REG_FRONT_FACE:
+                    case kOASISLiteRecognitionResult_Success:
                     {
-                        *audio = look_at_the_camera_audio;
-                        *len   = LOOK_AT_THE_CAMERA_AUDIO_LEN;
+                        *audio = recognition_successful_audio;
+                        *len   = RECOGNITION_SUCCESSFUL_AUDIO_LEN;
                     }
                     break;
-
-                    case OASIS_LITE_HEADLESS_REG_LEFT_FACE:
+                    case kOASISLiteRecognitionResult_Timeout:
                     {
-                        *audio = turn_face_to_left_audio;
-                        *len   = TURN_FACE_TO_LEFT_AUDIO_LEN;
-                    }
-                    break;
-
-                    case OASIS_LITE_HEADLESS_REG_RIGHT_FACE:
-                    {
-                        *audio = turn_face_to_right_audio;
-                        *len   = TURN_FACE_TO_RIGHT_AUDIO_LEN;
+                        unsigned int totalUsageCount;
+                        FWK_LpmManager_RequestStatus(&totalUsageCount);
+                        if (totalUsageCount == 0)
+                        {
+                            *audio = recognition_failed_audio;
+                            *len   = RECOGNITION_FAILED_AUDIO_LEN;
+                        }
                     }
                     break;
 
                     default:
-                        break;
-                }
-            }
-#endif
-            break;
-
-        case kOASISLiteState_DeRegistration:
-            switch (result)
-            {
-                case kOASISLiteDeregistrationResult_Invalid:
-                    if (s_OasisLiteState != kOASISLiteState_DeRegistration)
                     {
-                        *audio = starting_deregistration_audio;
-                        *len   = STARTING_DEREGISTRATION_AUDIO_LEN;
                     }
                     break;
-                case kOASISLiteDeregistrationResult_Success:
-                    *audio = deregistration_successful_audio;
-                    *len   = DEREGISTRATION_SUCCESSFUL_AUDIO_LEN;
-                    break;
-                case kOASISLiteDeregistrationResult_Timeout:
-                    *audio = deregistration_failed_audio;
-                    *len   = DEREGISTRATION_FAILED_AUDIO_LEN;
-                    break;
-
-                default:
-                {
                 }
             }
             break;
+            case kOASISLiteState_Registration:
+                switch (result)
+                {
+                    case kOASISLiteRegistrationResult_Invalid:
+                        if (s_OasisLiteState != kOASISLiteState_Registration)
+                        {
+                            *audio = starting_registration_audio;
+                            *len   = STARTING_REGISTRATION_AUDIO_LEN;
+                        }
+                        break;
+                    case kOASISLiteRegistrationResult_Success:
+                        *audio = registration_successful_audio;
+                        *len   = REGISTRATION_SUCCESSFUL_AUDIO_LEN;
+                        break;
 
-        default:
-        {
-        }
-    }
-    s_OasisLiteState = inferResult.state;
+                    case kOASISLiteRegistrationResult_Duplicated:
+                        *audio = registration_failed_audio;
+                        *len   = REGISTRATION_FAILED_AUDIO_LEN;
+                        break;
+
+                    case kOASISLiteRegistrationResult_Timeout:
+                        *audio = registration_failed_audio;
+                        *len   = REGISTRATION_FAILED_AUDIO_LEN;
+                        break;
+                    default:
+                    {
+                    }
+                }
+
 #if HEADLESS_ENABLE
-    s_HeadlessRegStatus = inferResult.headless_reg_status;
+                if (s_HeadlessRegStatus != pOasisResult->headless_reg_status)
+                {
+                    switch (pOasisResult->headless_reg_status)
+                    {
+                        case OASIS_LITE_HEADLESS_REG_FRONT_FACE:
+                        {
+                            *audio = look_at_the_camera_audio;
+                            *len   = LOOK_AT_THE_CAMERA_AUDIO_LEN;
+                        }
+                        break;
+
+                        case OASIS_LITE_HEADLESS_REG_LEFT_FACE:
+                        {
+                            *audio = turn_face_to_left_audio;
+                            *len   = TURN_FACE_TO_LEFT_AUDIO_LEN;
+                        }
+                        break;
+
+                        case OASIS_LITE_HEADLESS_REG_RIGHT_FACE:
+                        {
+                            *audio = turn_face_to_right_audio;
+                            *len   = TURN_FACE_TO_RIGHT_AUDIO_LEN;
+                        }
+                        break;
+
+                        default:
+                            break;
+                    }
+                }
 #endif
+                break;
+
+            case kOASISLiteState_DeRegistration:
+                switch (result)
+                {
+                    case kOASISLiteDeregistrationResult_Invalid:
+                        if (s_OasisLiteState != kOASISLiteState_DeRegistration)
+                        {
+                            *audio = starting_deregistration_audio;
+                            *len   = STARTING_DEREGISTRATION_AUDIO_LEN;
+                        }
+                        break;
+                    case kOASISLiteDeregistrationResult_Success:
+                        *audio = deregistration_successful_audio;
+                        *len   = DEREGISTRATION_SUCCESSFUL_AUDIO_LEN;
+                        break;
+                    case kOASISLiteDeregistrationResult_Timeout:
+                        *audio = deregistration_failed_audio;
+                        *len   = DEREGISTRATION_FAILED_AUDIO_LEN;
+                        break;
+
+                    default:
+                    {
+                    }
+                }
+                break;
+
+            default:
+            {
+            }
+        }
+        s_OasisLiteState = pOasisResult->state;
+#if HEADLESS_ENABLE
+        s_HeadlessRegStatus = pOasisResult->headless_reg_status;
+#endif
+    }
 }
 
 int APP_OutputDev_MqsAudio_InferCompleteDecode(output_algo_source_t source,
@@ -238,7 +241,7 @@ int APP_OutputDev_MqsAudio_InferCompleteDecode(output_algo_source_t source,
 {
     if (source == kOutputAlgoSource_Vision)
     {
-        _Vision_InferCompleteDecode(*(oasis_lite_result_t *)inferResult, audio, len);
+        _Vision_InferCompleteDecode((vision_algo_result_t *)inferResult, audio, len);
     }
     else if (source == kOutputAlgoSource_LPM)
     {
@@ -280,16 +283,24 @@ int APP_OutputDev_MqsAudio_InputNotifyDecode(const output_dev_t *dev,
         break;
         case (kEventID_SetBLEConnection):
         {
-            event_face_rec_t event = *(event_face_rec_t *)inputData;
-            if (event.wuart.status == 1)
+            /* guard for first time */
+            if (s_BleIsFirstInteraction)
             {
-                *audio = ble_connected_audio;
-                *len   = BLE_CONNECTED_AUDIO_LEN;
+                s_BleIsFirstInteraction = false;
             }
-            else if (event.wuart.status == 0)
+            else
             {
-                *audio = ble_disconnected_audio;
-                *len   = BLE_DISCONNECTED_AUDIO_LEN;
+                event_face_rec_t event = *(event_face_rec_t *)inputData;
+                if (event.wuart.status == 1)
+                {
+                    *audio = ble_connected_audio;
+                    *len   = BLE_CONNECTED_AUDIO_LEN;
+                }
+                else if (event.wuart.status == 0)
+                {
+                    *audio = ble_disconnected_audio;
+                    *len   = BLE_DISCONNECTED_AUDIO_LEN;
+                }
             }
         }
         break;

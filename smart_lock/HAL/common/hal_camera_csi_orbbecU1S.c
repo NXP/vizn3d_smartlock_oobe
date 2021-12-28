@@ -31,6 +31,7 @@
 #include "fwk_camera_manager.h"
 #include "fwk_log.h"
 #include "hal_camera_dev.h"
+#include "hal_event_descriptor_common.h"
 
 /*******************************************************************************
  * Definitions
@@ -387,12 +388,12 @@ static void _CameraDevIRData_Shift11_4ToGray(uint16_t *src, uint16_t *dst, int w
 static int s_PostProcessed;
 
 /*
- * Only do the minimum determination (data point and the format) of the frame in the dequeue 
+ * Only do the minimum determination (data point and the format) of the frame in the dequeue
  *
  * And split the post process(IR and Depth data processing) to postProcess as they will eat CPU which is
  * critical for the whole system. (Camera manager is running with the highest priority).
  *
-*/
+ */
 hal_camera_status_t HAL_CameraDev_CsiOrbbecU1s_Dequeue(const camera_dev_t *dev, void **data, pixel_format_t *format)
 {
     LOGI("++HAL_CameraDev_CsiOrbbecU1s_Dequeue");
@@ -425,7 +426,7 @@ hal_camera_status_t HAL_CameraDev_CsiOrbbecU1s_Dequeue(const camera_dev_t *dev, 
  *
  * Need to guarantee the postProcess only do once for the first call for one frame.
  *
-*/
+ */
 hal_camera_status_t HAL_CameraDev_CsiOrbbecU1s_PostProcess(const camera_dev_t *dev, void **data, pixel_format_t *format)
 {
     LOGI("++HAL_CameraDev_CsiOrbbecU1s_PostProcess");
@@ -437,14 +438,14 @@ hal_camera_status_t HAL_CameraDev_CsiOrbbecU1s_PostProcess(const camera_dev_t *d
     {
         if (*format == kPixelFormat_Depth16)
         {
-            OrbbecDevice_shift13_2ToDepth((uint16_t *)(*data), (uint16_t *)s_DepthBuffer,
-                                          CAMERA_DEV_WIDTH, CAMERA_DEV_HEIGHT);
-            *data   = (void *)s_DepthBuffer;
+            OrbbecDevice_shift13_2ToDepth((uint16_t *)(*data), (uint16_t *)s_DepthBuffer, CAMERA_DEV_WIDTH,
+                                          CAMERA_DEV_HEIGHT);
+            *data = (void *)s_DepthBuffer;
         }
         else
         {
-            _CameraDevIRData_Shift11_4ToGray((uint16_t *)(*data), (uint16_t *)(*data),
-                                             CAMERA_DEV_WIDTH, CAMERA_DEV_HEIGHT);
+            _CameraDevIRData_Shift11_4ToGray((uint16_t *)(*data), (uint16_t *)(*data), CAMERA_DEV_WIDTH,
+                                             CAMERA_DEV_HEIGHT);
         }
 
         /* Mark the post process for this frame to skip the duplicate of post process for the same frame */
@@ -455,6 +456,40 @@ hal_camera_status_t HAL_CameraDev_CsiOrbbecU1s_PostProcess(const camera_dev_t *d
     return ret;
 }
 
+static int HAL_CameraDev_CsiOrbbecU1s_InputNotify(const camera_dev_t *dev, void *data)
+{
+    LOGI("++HAL_CameraDev_CsiOrbbecU1s_InputNotify");
+
+    int error              = 0;
+    event_base_t eventBase = *(event_base_t *)data;
+    switch (eventBase.eventId)
+    {
+        case kEventID_ControlIRCamExposure:
+        {
+            event_common_t event = *(event_common_t *)data;
+
+            if (event.brightnessControl.enable)
+            {
+                if (event.brightnessControl.type == 0)
+                {
+                    CAMERA_DEVICE_ControlExt(&s_ObU1SCameraDevice, k3DCAMERA_SetFaceAE,
+                                             event.brightnessControl.faceRect);
+                }
+                else
+                {
+                    CAMERA_DEVICE_ControlExt(&s_ObU1SCameraDevice, k3DCAMERA_SetGlobalAE,
+                                             &event.brightnessControl.globalAE);
+                }
+            }
+        }
+        break;
+        default:
+            break;
+    }
+    LOGI("--HAL_CameraDev_CsiOrbbecU1s_InputNotify");
+    return error;
+}
+
 const static camera_dev_operator_t s_CameraDev_CsiOrbbecU1sOps = {
     .init        = HAL_CameraDev_CsiOrbbecU1s_Init,
     .deinit      = HAL_CameraDev_CsiOrbbecU1s_Deinit,
@@ -462,7 +497,7 @@ const static camera_dev_operator_t s_CameraDev_CsiOrbbecU1sOps = {
     .enqueue     = HAL_CameraDev_CsiOrbbecU1s_Enqueue,
     .dequeue     = HAL_CameraDev_CsiOrbbecU1s_Dequeue,
     .postProcess = HAL_CameraDev_CsiOrbbecU1s_PostProcess,
-    .inputNotify = NULL,
+    .inputNotify = HAL_CameraDev_CsiOrbbecU1s_InputNotify,
 };
 
 static camera_dev_t s_CameraDev_CsiOrbbecU1s = {

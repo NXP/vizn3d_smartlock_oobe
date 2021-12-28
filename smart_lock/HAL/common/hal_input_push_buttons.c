@@ -12,8 +12,6 @@
  * "InputNotify" event for other HAL devices.
  */
 
-#include "board_define.h"
-
 #include <FreeRTOS.h>
 #include <stdlib.h>
 #include <task.h>
@@ -41,9 +39,9 @@
 #define INPUT_DEV_PUSH_BUTTON_SW2_IRQ BOARD_BUTTON_SW2_IRQ
 #define INPUT_DEV_PUSH_BUTTON_SW3_IRQ BOARD_BUTTON_SW3_IRQ
 
-#define SOFTWARE_DEBOUNCE_TIME_MS 400
 #define DEBOUNCE_TIME_MS          10
 #define LONG_PRESS_TIMEOUT_MS     1500
+#define BLOCKING_TIME_MS          2000
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -69,7 +67,7 @@ typedef enum _switch_id
 
 typedef struct _button_data
 {
-    TimerHandle_t debouncingTimer;
+    TimerHandle_t releaseTimer;
     uint32_t lastDebounce;
     switch_id_t buttonId;
     switch_state_t state;
@@ -101,7 +99,7 @@ static input_dev_t s_InputDev_PushButtons = {
 
 static button_data_t s_buttons[kSwitchID_Count] = {
     {
-        .debouncingTimer = NULL,
+        .releaseTimer    = NULL,
         .lastDebounce    = 0,
         .buttonId        = kSwitchID_1,
         .state           = kSwitchState_Released,
@@ -110,7 +108,7 @@ static button_data_t s_buttons[kSwitchID_Count] = {
         .pin             = INPUT_DEV_SW1_GPIO_PIN,
     },
     {
-        .debouncingTimer = NULL,
+        .releaseTimer    = NULL,
         .lastDebounce    = 0,
         .buttonId        = kSwitchID_2,
         .state           = kSwitchState_Released,
@@ -119,7 +117,7 @@ static button_data_t s_buttons[kSwitchID_Count] = {
         .pin             = INPUT_DEV_SW2_GPIO_PIN,
     },
     {
-        .debouncingTimer = NULL,
+        .releaseTimer    = NULL,
         .lastDebounce    = 0,
         .buttonId        = kSwitchID_3,
         .state           = kSwitchState_Released,
@@ -132,11 +130,13 @@ static button_data_t s_buttons[kSwitchID_Count] = {
 
 static void *s_pEvent;
 static input_event_t s_inputEvent;
+static TimerHandle_t blockingTimer;
 
 /*******************************************************************************
  * Code
  ******************************************************************************/
-static void _TimerCallback(TimerHandle_t xTimer);
+static void _BlockingTimerCallback(TimerHandle_t xTimer);
+static void _ReleaseTimerCallback(TimerHandle_t xTimer);
 
 __attribute__((weak)) int APP_InputDev_PushButtons_SetEvent(switch_id_t button,
                                                             switch_press_type_t pressType,
@@ -183,14 +183,17 @@ hal_input_status_t HAL_InputDev_PushButtons_Init(input_dev_t *dev, input_dev_cal
     input_dev_push_buttons_pin_config.direction     = kGPIO_DigitalInput;
     input_dev_push_buttons_pin_config.interruptMode = kGPIO_IntRisingOrFallingEdge;
 
+    blockingTimer = xTimerCreate(NULL, pdMS_TO_TICKS(BLOCKING_TIME_MS), pdFALSE,
+                                (void *)0, _BlockingTimerCallback);
+
     for (int i = 0; i < kSwitchID_Count; i++)
     {
         GPIO_PinInit(s_buttons[i].base, s_buttons[i].pin, &input_dev_push_buttons_pin_config);
-        s_buttons[i].debouncingTimer = xTimerCreate(NULL, pdMS_TO_TICKS(SOFTWARE_DEBOUNCE_TIME_MS), pdFALSE,
-                                                    (void *)&s_buttons[i].buttonId, _TimerCallback);
-        if (s_buttons[i].debouncingTimer == NULL)
+        s_buttons[i].releaseTimer    = xTimerCreate(NULL, pdMS_TO_TICKS(LONG_PRESS_TIMEOUT_MS), pdFALSE,
+                                                    (void *)&s_buttons[i].buttonId, _ReleaseTimerCallback);
+        if (s_buttons[i].releaseTimer == NULL)
         {
-            LOGE("Create timer for time switch %d push button failed.", i);
+            LOGE("Create release timer for time switch %d push button failed.", i);
         }
         GPIO_PortClearInterruptFlags(s_buttons[i].base, (1 << s_buttons[i].pin));
 
@@ -275,10 +278,22 @@ void INPUT_DEV_PUSH_BUTTONS_IRQHandler(GPIO_Type *base, uint32_t intPin)
                         break;
                     }
 
+                    /* block all other pins */
+                    for (int j = 0; j < kSwitchID_Count; j++)
+                    {
+                        if (!((s_buttons[j].base == base) && ((intPin >> s_buttons[j].pin) & 0x01)))
+                        {
+                            /* Disable interrupts on the button */
+                            GPIO_PortDisableInterrupts(s_buttons[j].base, (1 << s_buttons[j].pin));
+                        }
+                    }
+
                     if (curr_state == kSwitchState_Pressed)
                     {
                         LOGI("SW%d Pressed.", i);
                         button->state = kSwitchState_Pressed;
+
+                        xTimerStartFromISR(button->releaseTimer, 0);
                     }
                     else if (curr_state == kSwitchState_Released)
                     {
@@ -293,7 +308,9 @@ void INPUT_DEV_PUSH_BUTTONS_IRQHandler(GPIO_Type *base, uint32_t intPin)
                             _HAL_InputDev_IrqHandler(button, kSwitchPressType_Short);
                         }
                         button->state = kSwitchState_Released;
-                        xTimerResetFromISR(button->debouncingTimer, &HigherPriorityTaskWoken);
+
+                        xTimerStopFromISR(button->releaseTimer, 0);
+                        xTimerStartFromISR(blockingTimer, &HigherPriorityTaskWoken);
                     }
                     button->lastDebounce = curr_time;
                 }
@@ -304,16 +321,32 @@ void INPUT_DEV_PUSH_BUTTONS_IRQHandler(GPIO_Type *base, uint32_t intPin)
     }
 }
 
-static void _TimerCallback(TimerHandle_t xTimer)
+static void _BlockingTimerCallback(TimerHandle_t xTimer)
+{
+    for (int i = 0; i < kSwitchID_Count; i++)
+    {
+        GPIO_PortClearInterruptFlags(s_buttons[i].base, (1U << s_buttons[i].pin));
+        GPIO_PortEnableInterrupts(s_buttons[i].base, (1U << s_buttons[i].pin));
+    }
+}
+
+static void _ReleaseTimerCallback(TimerHandle_t xTimer)
 {
     for (int i = 0; i < kSwitchID_Count; i++)
     {
         uint8_t id = *(uint8_t *)pvTimerGetTimerID(xTimer);
         if (s_buttons[i].buttonId == id)
         {
-            GPIO_PortClearInterruptFlags(s_buttons[i].base, (1U << s_buttons[i].pin));
-            GPIO_PortEnableInterrupts(s_buttons[i].base, (1U << s_buttons[i].pin));
-            break;
+            switch_state_t curr_state = GPIO_PinRead(s_buttons[i].base, s_buttons[i].pin);
+            if (curr_state == kSwitchState_Pressed)
+            {
+                LOGI("SW%d Released by long press timeout.", i);
+                GPIO_PortDisableInterrupts(s_buttons[i].base, (1 << s_buttons[i].pin));
+                _HAL_InputDev_IrqHandler(&s_buttons[i], kSwitchPressType_Long);
+                s_buttons[i].state = kSwitchState_Released;
+
+                xTimerStart(blockingTimer, 0);
+            }
         }
     }
 }

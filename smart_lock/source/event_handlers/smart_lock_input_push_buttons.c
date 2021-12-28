@@ -8,7 +8,7 @@
  */
 
 #include "stdint.h"
-#include "hal_vision_algo_oasis_lite.h"
+#include "hal_vision_algo.h"
 #include "hal_smart_lock_config.h"
 #include "hal_event_descriptor_face_rec.h"
 
@@ -54,8 +54,8 @@ int APP_InputDev_PushButtons_SetEvent(switch_id_t button,
         case kSwitchID_1:
             if (pressType == kSwitchPressType_Long)
             {
-                unsigned int totalUsageCount;
                 LOGD("Long PRESS Detected.");
+                unsigned int totalUsageCount;
                 FWK_LpmManager_RequestStatus(&totalUsageCount);
                 FWK_LpmManager_EnableSleepMode(kLPMManagerStatus_SleepEnable);
             }
@@ -78,7 +78,6 @@ int APP_InputDev_PushButtons_SetEvent(switch_id_t button,
                 *receiverList                    = 1 << kFWKTaskID_VisionAlgo;
                 s_FaceRecEvent.eventBase.eventId = kEventFaceRecID_AddUser;
                 s_FaceRecEvent.addFace.hasName   = false;
-                s_FaceRecEvent.delFace.hasID     = false;
                 *event                           = &s_FaceRecEvent;
             }
             break;

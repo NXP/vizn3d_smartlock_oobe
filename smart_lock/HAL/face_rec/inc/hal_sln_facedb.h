@@ -22,24 +22,21 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define INVALID_ID          0xFFFF
-#define MAX_FACE_DB_SIZE    100
-#define FACE_NAME_MAX_LEN   31
-#define MAX_OASIS_FACE_SIZE 900
+#define INVALID_ID        0xFFFF
+#define MAX_FACE_DB_SIZE  (100U)
+#define FACE_NAME_MAX_LEN (31U)
 
 #ifndef AUTOSAVE
 #define AUTOSAVE 1
-#endif
-
-#if defined(AUTOSAVE) & (AUTOSAVE == 1)
-#warning "A screen flicker might be observed when registering faces if autosave is enabled."
 #endif
 
 typedef enum _facedb_status
 {
     kFaceDBStatus_Success,
     kFaceDBStatus_AlreadyInit,
+    kFaceDBStatus_NotInit,
     kFaceDBStatus_VersionMismatch,
+    kFaceDBStatus_NotEnoughMemory,
     kFaceDBStatus_Full,
     kFaceDBStatus_WrongID,
     kFaceDBStatus_WrongParam,
@@ -55,9 +52,10 @@ extern "C" {
 
 /*!
  * @brief Face database init create and loads faces.
+ * @param featureSize - Size of the Face Feature. If 0 use the Max value
  * @returns a status
  */
-facedb_status_t HAL_Facedb_Init(void);
+facedb_status_t HAL_Facedb_Init(uint16_t featureSize);
 
 /*!
  * @brief Save all users to flash

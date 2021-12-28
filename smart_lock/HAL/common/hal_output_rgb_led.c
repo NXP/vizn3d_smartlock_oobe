@@ -11,7 +11,7 @@
  * @brief output led device implementation.
  */
 
-#include "board_define.h"
+#include "app_config.h"
 
 #include "FreeRTOS.h"
 #include "board.h"
@@ -20,7 +20,7 @@
 #include "fwk_output_manager.h"
 #include "hal_event_descriptor_common.h"
 #include "hal_output_dev.h"
-#include "hal_vision_algo_oasis_lite.h"
+#include "hal_vision_algo.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -121,23 +121,43 @@ static hal_output_status_t HAL_OutputDev_RgbLed_InferComplete(const output_dev_t
                                                               output_algo_source_t source,
                                                               void *inferResult)
 {
-    oasis_lite_result_t *result = (oasis_lite_result_t *)inferResult;
-    hal_output_status_t error   = kStatus_HAL_OutputSuccess;
-    if (source == kOutputAlgoSource_Vision)
+    vision_algo_result_t *visionAlgoResult = (vision_algo_result_t *)inferResult;
+    hal_output_status_t error              = kStatus_HAL_OutputSuccess;
+
+    if (visionAlgoResult != NULL)
     {
-        if ((result->face_recognized) && (result->face_id >= 0))
+        if (visionAlgoResult->id == kVisionAlgoID_OasisLite)
         {
-            RGB_LED_SET_COLOR(kRGBLedColor_Green);
+            oasis_lite_result_t *result = &(visionAlgoResult->oasisLite);
+            if (source == kOutputAlgoSource_Vision)
+            {
+                if ((result->face_recognized) && (result->face_id >= 0))
+                {
+                    RGB_LED_SET_COLOR(kRGBLedColor_Green);
+                }
+                else if (result->face_count)
+                {
+                    RGB_LED_SET_COLOR(kRGBLedColor_Red);
+                }
+                else
+                {
+                    RGB_LED_SET_COLOR(kRGBLedColor_Off);
+                }
+            }
         }
-        else if (result->face_count)
+        else if (visionAlgoResult->id == kVisionAlgoID_H264Recording)
         {
-            RGB_LED_SET_COLOR(kRGBLedColor_Red);
-        }
-        else
-        {
-            RGB_LED_SET_COLOR(kRGBLedColor_Off);
+            if (visionAlgoResult->h264Recording.state == kRecordingState_Start)
+            {
+                RGB_LED_SET_COLOR(kRGBLedColor_Purple);
+            }
+            else
+            {
+                RGB_LED_SET_COLOR(kRGBLedColor_Off);
+            }
         }
     }
+
     return error;
 }
 

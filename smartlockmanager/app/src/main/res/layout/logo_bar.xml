@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    android:id="@+id/status_view_info"
+    android:layout_width="wrap_content"
+    android:layout_height="50dp"
+    android:visibility="visible"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="6dp"
+    app:cardUseCompatPadding="false"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="-12dp"
+        android:paddingBottom="32dp"
+        android:scaleX="0.5"
+        android:scaleY="0.5"
+        android:src="@drawable/nxp_logo" />
+
+</androidx.cardview.widget.CardView>

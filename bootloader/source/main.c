@@ -9,10 +9,11 @@
 
 /* Board includes */
 #include "pin_mux.h"
-#include "clock_config.h"
 #include "board.h"
+#include "clock_config.h"
 #include "sln_push_buttons_driver.h"
 #include "sln_rgb_led_driver.h"
+#include "app.h"
 
 /* FreeRTOS kernel includes */
 #include "FreeRTOS.h"
@@ -75,15 +76,7 @@ int main(void)
     SCB->SHCSR |= (SCB_SHCSR_BUSFAULTENA_Msk | /*SCB_SHCSR_USGFAULTENA_Msk |*/ SCB_SHCSR_MEMFAULTENA_Msk);
 
     /* Init board hardware */
-    /* Relocate Vector Table */
-#if RELOCATE_VECTOR_TABLE
-    BOARD_RelocateVectorTableToRam();
-#endif
-
-    BOARD_ConfigMPU();
-    BOARD_InitBootPins();
-    BOARD_InitBootClocks();
-    BOARD_InitDebugConsole();
+    BOARD_InitHardware();
 
     APP_SpecificCode();
 

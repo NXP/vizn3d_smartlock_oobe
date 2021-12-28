@@ -1,0 +1,194 @@
+<resources>
+    <string name="app_name">Smart Lock Manager</string>
+
+    <string name="device_scan">Device Scan</string>
+    <string name="upper_board_suffix">Board</string>
+    <string name="scan_title">Boards</string>
+    <string name="no_boards">No boards available!!</string>
+    <string name="no_users">No users registered!!</string>
+    <string name="welcome">Welcome to Vision 3</string>
+    <string name="forgotten_password_description">Forgot password? You can find your password\nin the app_config structure in your Vision3 board code</string>
+    <string name="change_password_description">The password must be six digits long</string>
+    <string name="auth_login">Please login to continue</string>
+    <string name="scanning_not_active">Scanning is no longer active.</string>
+    <string name="location_not_active">Please enable location for scanning to work.</string>
+
+    <!-- General -->
+    <string name="error_title">Error</string>
+    <string name="error_ble_required">Sorry, your device does not support Bluetooth Low Energy.</string>
+    <string name="error_enable_bluetooth">Please enable Bluetooth.</string>
+    <string name="error_lost_connection">Connection has been lost.</string>
+    <string name="grant_permission">You need to allow access this device\'s location.</string>
+    <string name="grant_permission_manual">You need to allow the app to access device location via manual settings.</string>
+
+    <!-- Menus -->
+    <string name="menu_scan_start">SCAN</string>
+    <string name="menu_scan_stop">STOP</string>
+    <string name="menu_set_phy">SET PHY</string>
+    <string name="menu_read_phy">READ PHY</string>
+    <string name="menu_connect">CONNECT</string>
+    <string name="menu_disconnect">DISCONNECT</string>
+    <string name="menu_done">DONE</string>
+    <string name="menu_about">ABOUT</string>
+    <string name="menu_address">ADDRESS</string>
+    <string name="button_update">Update</string>
+    <string name="button_add_user">Add User</string>
+    <string name="button_go_to_scan">Go to Scan</string>
+
+    <string name="state_connected">Connected</string>
+    <string name="state_connecting">Connecting...</string>
+    <string name="state_disconnected">Disconnected</string>
+    <string name="state_authenticating">Authenticating...</string>
+    <string name="state_changing_password">Changing Password</string>
+    <string name="state_registering">Registering...</string>
+    <string name="state_sending_registration_command">Sending Registration Command...</string>
+    <string name="state_sending_deregistration_command">Sending Deregistration Command...</string>
+    <string name="state_switching_camera_preview">Switching Camera Preview...</string>
+    <string name="state_updating_name">Updating Name...</string>
+    <string name="state_deleting_user">Deleting User...</string>
+    <string name="state_syncing_users">Syncing Users...</string>
+    <string name="state_sending">Sending...</string>
+    <string name="state_get_app_type">Getting App Type...</string>
+    <string name="state_get_algo_version">Getting Algo Version..</string>
+    <string name="state_board_disconnected">Board Disconnected</string>
+
+    <!-- Success -->
+    <string name="success">Success</string>
+    <string name="success_password">Password updated successfully!</string>
+    <string name="success_change_password_cancelled">Password change cancelled!</string>
+    <string name="success_registration">Successfully registered!</string>
+    <string name="success_reregistration">Successfully re-registered!</string>
+    <string name="success_registration_cancelled">Registration cancelled!</string>
+    <string name="success_reregistration_cancelled">Re-registration cancelled!</string>
+    <string name="success_command">Command sent successfully!</string>
+    <string name="success_update">Update successful!</string>
+    <string name="success_delete">Delete successful!</string>
+    <string name="success_smart_lock">smart_lock</string>
+    <string name="success_door_access">door_access</string>
+    <string name="success_algo_version_match">APK algorithm match!</string>
+
+    <!-- Errors -->
+    <string name="error_invalid_packet">Invalid bluetooth packet!</string>
+    <string name="error_general">Something is wrong. No idea what!</string>
+    <string name="error_timeout">Connection timeout!</string>
+
+    <string name="error_incorrect_password">Password must have 6 characters!</string>
+    <string name="error_wrong_password">Wrong password!</string>
+    <string name="error_wrong_old_password">Wrong old password!</string>
+
+    <string name="error_registration_no_name">Empty field or wrong name!</string>
+    <string name="error_registration">Failed registration!</string>
+    <string name="error_duplicate">User already exists!</string>
+
+    <string name="error_command_sending">Command failed!</string>
+
+    <string name="error_update">Update failed!</string>
+    <string name="error_delete">Delete failed!</string>
+
+    <string name="error_algo_version_mismatch">APK algorithm mismatch!</string>
+
+    <!-- Authentication -->
+    <string name="authentication">Authentication</string>
+
+    <string name="login">Login</string>
+    <string name="login_prefix">Welcome to your</string>
+    <string name="login_suffix">board</string>
+    <string name="password_hint">Enter Password</string>
+
+    <string name="password_shared_pref">shared-pref-password</string>
+
+    <!-- Registration -->
+    <string name="capture">Face Capture</string>
+    <string name="registration_confirm_title">Photo</string>
+    <string name="registration_confirm_subtitle">Will be used for recognition</string>
+    <string name="title_camera_permission">Need Camera Permission</string>
+    <string name="msg_camera_permission">Application needs camera permission for recognize your face.</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="button_register">Register</string>
+    <string name="name">Name</string>
+    <string name="password">Password</string>
+    <string name="id">ID</string>
+    <string name="registration_name_description">The name must be less than 31 characters and must not contain special characters.
+        Don\'t worry! You can modify this name, in the application, later on</string>
+    <string name="registration_duplicate_title">Face duplicate with [%s]</string>
+    <string name="registration_duplicate_description">There is already a user registered with this face</string>
+    <string name="registration_duplicate_question">Do you want to update it ?</string>
+
+    <string name="test">Test</string>
+    <string name="description_info">Info</string>
+
+    <string name="app_authentication">Authentication</string>
+    <string name="app_registration">Registration</string>
+
+    <string name="app_registration_confirm">Registration Confirm</string>
+
+    <string name="app_changepassword">ChangePassword</string>
+    <string name="app_usermanagement">UserManagement</string>
+    <string name="app_remotecommand">RemoteCommand</string>
+
+    <!-- Wireless UART -->
+    <string name="uart_mode_console">Console</string>
+    <string name="uart_mode_uart">UART</string>
+    <string name="app_w_uart">Wireless UART</string>
+    <string name="app_w_console">Wireless Console</string>
+
+    <!-- User Management -->
+    <string name="user_management">User Manager</string>
+    <string name="users_title">Users</string>
+    <string name="database">users-database</string>
+    <string name="user">user</string>
+    <string name="user_cap">Name</string>
+    <string name="users">users</string>
+    <string name="sync">Sync</string>
+
+    <!-- User Detail -->
+    <string name="user_settings">User Settings</string>
+    <string name="intent_user_id">intent.user.id</string>
+    <string name="intent_user_name">intent.user.name</string>
+    <string name="intent_user_position">intent.user.position</string>
+
+    <string name="button_delete">Delete</string>
+    <string name="button_update_name">Update</string>
+    <string name="button_reregistration">Re-registration</string>
+
+    <string name="delete">Delete User</string>
+    <string name="delete_description">Remove this user from the Vision Board</string>
+
+    <string name="update">Update Name</string>
+    <string name="update_description">Change the name of this user</string>
+
+    <string name="reregister">Reregister</string>
+    <string name="reregister_description">Register a new face for this user</string>
+
+    <string name="delete_title_popup">You are about to delete this user</string>
+    <string name="delete_description_popup">This will remove the user from the vision board</string>
+    <string name="delete_check_question">Are you sure?</string>
+
+    <string name="update_title_popup">Update the name of this user</string>
+
+    <!-- Commands -->
+    <string name="commands_title">Commands</string>
+    <string name="remote_command">Remote Command</string>
+
+    <string name="change_password">Change Password</string>
+    <string name="remote_change_password_description">Modify the login password</string>
+
+    <string name="registration">Registration</string>
+    <string name="remote_registration_description">Trigger registration on the Vision board</string>
+
+    <string name="deregistration">Deregistration</string>
+    <string name="remote_deregistration_description">Trigger deregistration on the Vision board</string>
+
+    <string name="camera_switch">Preview Camera Switch</string>
+    <string name="remote_camera_switch_description">Switch the camera preview on the Vision screen</string>
+
+    <!-- Change Password -->
+
+    <string name="password_old">Old password</string>
+    <string name="password_new">New password</string>
+    <string name="change">Change</string>
+
+
+</resources>

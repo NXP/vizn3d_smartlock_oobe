@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.appbar.MaterialToolbar xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/toolbar_size"
+    android:paddingTop="24dp"
+    android:paddingBottom="24dp"
+    android:elevation="12dp"
+    android:background="@drawable/gradient_orange"
+    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+    app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="18dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/toolbar_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:text="Toolbar Title"
+            android:textAlignment="center"
+            android:textSize="38sp"
+            android:textStyle="bold"
+            android:textColor="@color/white" />
+        <TextView
+            android:id="@+id/toolbar_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/toolbar_title"
+            android:layout_marginTop="14dp"
+            android:layout_centerHorizontal="true"
+            android:text="Toolbar Subtitle"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/white" />
+    </RelativeLayout>
+</com.google.android.material.appbar.MaterialToolbar>

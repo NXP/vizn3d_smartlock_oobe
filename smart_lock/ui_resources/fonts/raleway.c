@@ -7,8 +7,8 @@
  * FileName: raleway.cpp
  *****************************************************************************/
 
-#include <fonts/raleway.h>
 #include <stddef.h>
+#include <ui_resources/fonts/raleway.h>
 
 const unsigned char d4dfnt_Raleway10_data_table[] = {
 

@@ -585,6 +585,43 @@ static int HAL_GfxDev_Pxp_BuildGray888XFromDepth16(gfx_surface_t *pSrc, gfx_surf
     return 0;
 }
 
+static int HAL_GfxDev_Pxp_YUYV1P422ToYUV420P(gfx_surface_t *pSrc, gfx_surface_t *pDst)
+{
+    unsigned char *pUYVY    = (unsigned char *)pSrc->buf;
+    unsigned char *pYUV420P = (unsigned char *)pDst->buf;
+    int w                   = pSrc->width;
+    int h                   = pSrc->height;
+
+    unsigned int *pY = (unsigned int *)pYUV420P;
+    unsigned int *pU = (unsigned int *)(pYUV420P + w * h);
+    unsigned int *pV = (unsigned int *)(pYUV420P + w * h + w * h / 4);
+
+    for (int i = 0; i < h; i++)
+    {
+        for (int j = 0; j < w / 16; j++)
+        {
+            /* fill the Y */
+            *pY++ = (pUYVY[0] | (pUYVY[2] << 8) | (pUYVY[4] << 16) | (pUYVY[6] << 24));
+            *pY++ = (pUYVY[8] | (pUYVY[10] << 8) | (pUYVY[12] << 16) | (pUYVY[14] << 24));
+
+            *pY++ = (pUYVY[16] | (pUYVY[18] << 8) | (pUYVY[20] << 16) | (pUYVY[22] << 24));
+            *pY++ = (pUYVY[24] | (pUYVY[26] << 8) | (pUYVY[28] << 16) | (pUYVY[30] << 24));
+
+            /* sample the UV with only even row */
+            if ((i & 0x1) == 0)
+            {
+                *pU++ = (pUYVY[1] | (pUYVY[5] << 8) | (pUYVY[9] << 16) | (pUYVY[13] << 24));
+                *pU++ = (pUYVY[17] | (pUYVY[21] << 8) | (pUYVY[25] << 16) | (pUYVY[29] << 24));
+                *pV++ = (pUYVY[3] | (pUYVY[7] << 8) | (pUYVY[11] << 16) | (pUYVY[15] << 24));
+                *pV++ = (pUYVY[19] | (pUYVY[23] << 8) | (pUYVY[27] << 16) | (pUYVY[31] << 24));
+            }
+            pUYVY += 32;
+        }
+    }
+
+    return 0;
+}
+
 /*
  * @brief blit the source surface to the destination surface.
  *
@@ -602,6 +639,32 @@ int HAL_GfxDev_Pxp_Blit(
     int error                                       = 0;
     pxp_ps_buffer_config_t *pPsBufferConfig         = &s_GfxPxpHandle.psBufferConfig;
     pxp_output_buffer_config_t *pOutputBufferConfig = &s_GfxPxpHandle.outputBufferConfig;
+
+    if (pDst->format == kPixelFormat_YUV420P)
+    {
+        // tmp swap back for testing
+        if ((pRotate->target == kGFXRotate_SRCSurface) &&
+            ((pRotate->degree == kCWRotateDegree_90) || (pRotate->degree == kCWRotateDegree_270)))
+        {
+            pRotate->target = kGFXRotate_DSTSurface;
+            //
+            // need to swap the width and height as we force the rotate on DST surface
+            // src
+            int tmp      = pSrc->height;
+            pSrc->height = pSrc->width;
+            pSrc->width  = tmp;
+            tmp          = pSrc->left;
+            pSrc->left   = pSrc->top;
+            pSrc->top    = tmp;
+            tmp          = pSrc->right;
+            pSrc->right  = pSrc->bottom;
+            pSrc->bottom = tmp;
+        }
+
+        error = HAL_GfxDev_Pxp_YUYV1P422ToYUV420P(pSrc, pDst);
+        _HAL_GfxDev_Pxp_Unlock();
+        return error;
+    }
 
     // WR for PXP limitation: PXP can not do PS rotate and scale at the same time
     // which would cause several vertical garbage lines on the left
@@ -900,8 +963,8 @@ int HAL_GfxDev_Pxp_DrawText(const gfx_dev_t *dev,
 
     uint16_t *pCanvasBuffer = (uint16_t *)pOverlay->buf;
     int rgb565Width         = pOverlay->pitch / sizeof(uint16_t);
-    put_string(x, y, (char *)pText, (unsigned short)(text_color & 0xFFFF), (unsigned short)(bg_color & 0xFFFF),
-               (font_t)type, pCanvasBuffer, rgb565Width);
+    put_string_utf8(x, y, (char *)pText, (unsigned short)(text_color & 0xFFFF), (unsigned short)(bg_color & 0xFFFF),
+                    (font_t)type, pCanvasBuffer, rgb565Width);
 
     return error;
 }

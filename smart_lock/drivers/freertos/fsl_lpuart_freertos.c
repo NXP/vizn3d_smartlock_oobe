@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015, Freescale Semiconductor, Inc.
- * Copyright 2016-2021 NXP
+ * Copyright 2016-2020 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -64,9 +64,9 @@ static void LPUART_RTOS_Callback(LPUART_Type *base, lpuart_handle_t *state, stat
     }
 }
 
-static void LPUART_RTOS_TimeoutCallback(TimerHandle_t xTimer)
+static void LPUART_RTOS_TimeoutCallback( TimerHandle_t xTimer )
 {
-    int timerId  = (*(uint32_t *)pvTimerGetTimerID(xTimer));
+    int timerId = (*(uint32_t*)pvTimerGetTimerID(xTimer));
     int instance = TIMER_INSTANCE(timerId);
 
     switch (timerId & 0x1)
@@ -178,11 +178,10 @@ int LPUART_RTOS_Init(lpuart_rtos_handle_t *handle, lpuart_handle_t *t_handle, co
 
     handle->rxTimerId = RX_TIMEOUT_TIMERID(LPUART_GetInstance(handle->base));
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-    handle->rxTimer = xTimerCreateStatic("rxTimer", pdMS_TO_TICKS(1000), pdFALSE, &(handle->rxTimerId),
-                                         LPUART_RTOS_TimeoutCallback, &handle->rxTimerBuffer);
+    handle->rxTimer =xTimerCreateStatic("rxTimer", pdMS_TO_TICKS(1000), pdFALSE, &(handle->rxTimerId),
+            LPUART_RTOS_TimeoutCallback, &handle->rxTimerBuffer);
 #else
-    handle->rxTimer =
-        xTimerCreate("rxTimer", pdMS_TO_TICKS(1000), pdFALSE, &(handle->rxTimerId), LPUART_RTOS_TimeoutCallback);
+    handle->rxTimer =xTimerCreate("rxTimer", pdMS_TO_TICKS(1000), pdFALSE, &(handle->rxTimerId), LPUART_RTOS_TimeoutCallback);
 #endif
     if (NULL == handle->rxTimer)
     {
@@ -195,11 +194,10 @@ int LPUART_RTOS_Init(lpuart_rtos_handle_t *handle, lpuart_handle_t *t_handle, co
 
     handle->txTimerId = TX_TIMEOUT_TIMERID(LPUART_GetInstance(handle->base));
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-    handle->txTimer = xTimerCreateStatic("txTimer", pdMS_TO_TICKS(1000), pdFALSE, &(handle->txTimerId),
-                                         LPUART_RTOS_TimeoutCallback, &handle->txTimerBuffer);
+    handle->txTimer =xTimerCreateStatic("txTimer", pdMS_TO_TICKS(1000), pdFALSE, &(handle->txTimerId),
+            LPUART_RTOS_TimeoutCallback, &handle->txTimerBuffer);
 #else
-    handle->txTimer =
-        xTimerCreate("txTimer", pdMS_TO_TICKS(1000), pdFALSE, &(handle->txTimerId), LPUART_RTOS_TimeoutCallback);
+    handle->txTimer =xTimerCreate("txTimer", pdMS_TO_TICKS(1000), pdFALSE, &(handle->txTimerId), LPUART_RTOS_TimeoutCallback);
 #endif
     if (NULL == handle->txTimer)
     {
@@ -388,9 +386,8 @@ int LPUART_RTOS_SendTimeout(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint3
     xTimerChangePeriod(handle->txTimer, pdMS_TO_TICKS(timeout_ms), 0);
     xTimerStart(handle->txTimer, 0);
 
-    ev = xEventGroupWaitBits(handle->txEvent, RTOS_LPUART_TX_COMPLETE | RTOS_LPUART_TX_TIMEOUT, pdTRUE, pdFALSE,
-                             portMAX_DELAY);
-    if ((ev & RTOS_LPUART_TX_TIMEOUT) != 0)
+    ev = xEventGroupWaitBits(handle->txEvent, RTOS_LPUART_TX_COMPLETE | RTOS_LPUART_TX_TIMEOUT, pdTRUE, pdFALSE, portMAX_DELAY);
+    if((ev & RTOS_LPUART_TX_TIMEOUT) != 0)
     {
         LPUART_TransferAbortSend(handle->base, handle->t_state);
         (void)xEventGroupClearBits(handle->rxEvent, RTOS_LPUART_TX_COMPLETE);
@@ -472,9 +469,8 @@ int LPUART_RTOS_Receive(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t 
     }
 
     ev = xEventGroupWaitBits(
-        handle->rxEvent,
-        RTOS_LPUART_RX_COMPLETE | RTOS_LPUART_RING_BUFFER_OVERRUN | RTOS_LPUART_HARDWARE_BUFFER_OVERRUN, pdTRUE,
-        pdFALSE, portMAX_DELAY);
+        handle->rxEvent, RTOS_LPUART_RX_COMPLETE | RTOS_LPUART_RING_BUFFER_OVERRUN | RTOS_LPUART_HARDWARE_BUFFER_OVERRUN,
+        pdTRUE, pdFALSE, portMAX_DELAY);
     if ((ev & RTOS_LPUART_HARDWARE_BUFFER_OVERRUN) != 0U)
     {
         /* Stop data transfer to application buffer, ring buffer is still active */
@@ -521,8 +517,7 @@ int LPUART_RTOS_Receive(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t 
     return retval;
 }
 
-int LPUART_RTOS_ReceiveTimeout(
-    lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length, size_t *received, uint32_t timeout_ms)
+int LPUART_RTOS_ReceiveTimeout(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length, size_t *received, uint32_t timeout_ms)
 {
     EventBits_t ev;
     size_t n              = 0;
@@ -569,10 +564,9 @@ int LPUART_RTOS_ReceiveTimeout(
     xTimerChangePeriod(handle->rxTimer, pdMS_TO_TICKS(timeout_ms), 0);
     xTimerStart(handle->rxTimer, 0);
 
-    ev = xEventGroupWaitBits(handle->rxEvent,
-                             RTOS_LPUART_RX_COMPLETE | RTOS_LPUART_RING_BUFFER_OVERRUN |
-                                 RTOS_LPUART_HARDWARE_BUFFER_OVERRUN | RTOS_LPUART_RX_TIMEOUT,
-                             pdTRUE, pdFALSE, portMAX_DELAY);
+    ev = xEventGroupWaitBits(
+        handle->rxEvent, RTOS_LPUART_RX_COMPLETE | RTOS_LPUART_RING_BUFFER_OVERRUN | RTOS_LPUART_HARDWARE_BUFFER_OVERRUN | RTOS_LPUART_RX_TIMEOUT,
+        pdTRUE, pdFALSE, portMAX_DELAY);
     if ((ev & RTOS_LPUART_HARDWARE_BUFFER_OVERRUN) != 0U)
     {
         /* Stop data transfer to application buffer, ring buffer is still active */
@@ -593,16 +587,16 @@ int LPUART_RTOS_ReceiveTimeout(
         retval         = kStatus_LPUART_RxRingBufferOverrun;
         local_received = 0;
     }
-    else if ((ev & RTOS_LPUART_RX_TIMEOUT) != 0)
+    else if((ev & RTOS_LPUART_RX_TIMEOUT) != 0)
     {
-        LPUART_TransferGetReceiveCount(handle->base, handle->t_state, (uint32_t *)&local_received);
+        LPUART_TransferGetReceiveCount(handle->base, handle->t_state, (uint32_t*)&local_received);
         LPUART_TransferAbortReceive(handle->base, handle->t_state);
         (void)xEventGroupClearBits(handle->rxEvent, RTOS_LPUART_RX_COMPLETE);
         retval = kStatus_Timeout;
     }
     else if ((ev & RTOS_LPUART_RX_COMPLETE) != 0U)
     {
-        LPUART_TransferGetReceiveCount(handle->base, handle->t_state, (uint32_t *)&local_received);
+        LPUART_TransferGetReceiveCount(handle->base, handle->t_state, (uint32_t*)&local_received);
         retval         = kStatus_Success;
         local_received = length;
     }

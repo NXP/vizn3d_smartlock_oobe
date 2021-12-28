@@ -58,6 +58,7 @@ typedef enum _camera_device_cmd
 #define CAMERA_MONO_MODE_ENABLED  1
 
     kCAMERA_DeviceExposureMode, /*!< Exposure Mode. */
+
 #define CAMERA_EXPOSURE_MODE_AUTO_LEVEL0 0
 #define CAMERA_EXPOSURE_MODE_AUTO_LEVEL1 1
 #define CAMERA_EXPOSURE_MODE_AUTO_LEVEL2 2
@@ -69,6 +70,9 @@ typedef enum _camera_device_cmd
 #define CAMERA_3D_STREAM_TYPE_DEPTH    2
 #define CAMERA_3D_STREAM_TYPE_IR_DEPTH 3
 
+    k3DCAMERA_SetFaceAE,   /*!< OrbbecU1S faceAE feature. */
+    k3DCAMERA_SetGlobalAE, /*!< OrbbecU1S globalAE feature. */
+
 } camera_device_cmd_t;
 
 /*! @brief Camera device operations. */
@@ -79,6 +83,7 @@ typedef struct _camera_device_operations
     status_t (*start)(camera_device_handle_t *handle);
     status_t (*stop)(camera_device_handle_t *handle);
     status_t (*control)(camera_device_handle_t *handle, camera_device_cmd_t cmd, int32_t arg);
+    status_t (*control_ext)(camera_device_handle_t *handle, camera_device_cmd_t cmd, const void *specialArg);
     status_t (*init_ext)(camera_device_handle_t *handle, const camera_config_t *config, const void *specialConfig);
 } camera_device_operations_t;
 
@@ -154,6 +159,11 @@ static inline status_t CAMERA_DEVICE_Deinit(camera_device_handle_t *handle)
 static inline status_t CAMERA_DEVICE_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd, int32_t arg)
 {
     return handle->ops->control(handle, cmd, arg);
+}
+
+static inline status_t CAMERA_DEVICE_ControlExt(camera_device_handle_t *handle, camera_device_cmd_t cmd, void *specialArg)
+{
+    return handle->ops->control_ext(handle, cmd, specialArg);
 }
 
 /*!

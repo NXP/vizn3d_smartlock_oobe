@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/authentication_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:animateLayoutChanges="true"
+    tools:context=".activity.AuthenticationActivity">
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/toolbar_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:context=".activity.RegistrationActivity"
+        android:layout_above="@id/login_text"
+        android:layout_alignParentTop="true">
+
+        <include layout="@layout/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="@dimen/fab_size"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/fab_margin"
+            app:elevation="12dp"
+            android:onClick="onBackFABPressed"
+            app:layout_anchor="@id/toolbar"
+            app:layout_anchorGravity="start|bottom"
+            android:src="@drawable/ic_baseline_arrow_back_24"
+            app:tint="@color/white"
+            app:backgroundTint="@color/button_blue" />
+
+        <include layout="@layout/custom_cardview_fab"
+            android:id="@+id/scan_fab_cardview"/>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <TextView
+        android:id="@+id/login_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginEnd="28dp"
+        android:layout_marginBottom="14dp"
+        android:textSize="24sp"
+        android:textColor="@color/black"
+        android:textStyle="normal"
+        android:elegantTextHeight="true"
+        android:layout_above="@id/outlinedTextField" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/outlinedTextField"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginEnd="28dp"
+        android:hint="@string/password_hint"
+        android:textColorHint="@color/temperature_gray"
+        android:elevation="6dp"
+        app:counterEnabled="true"
+        app:counterMaxLength="6"
+        app:startIconDrawable="@drawable/ic_baseline_lock_24"
+        app:endIconMode="password_toggle"
+        app:endIconTint="@color/temperature_gray"
+        app:boxStrokeColor="@color/text_input_layout_stroke_color"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_above="@id/forgotten_password">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/authentication_password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword|numberPassword"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:maxEms="6"
+            android:maxLength="6"
+            android:layout_gravity="bottom"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/forgotten_password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginEnd="28dp"
+        android:layout_marginBottom="28dp"
+        android:text="@string/forgotten_password_description"
+        android:elegantTextHeight="true"
+        android:textSize="12sp"
+        android:textAlignment="center"
+        android:alpha="0.4"
+        android:textColor="@color/black"
+        android:layout_alignParentBottom="true" />
+
+</RelativeLayout>

@@ -964,7 +964,7 @@ V8 if desired. */
 
 	/* For libraries that break the list data hiding, and access list structure
 	members directly (which is not supposed to be done). */
-	#define pxContainer pvContainer
+//	#define pxContainer pvContainer
 #endif /* configENABLE_BACKWARD_COMPATIBILITY */
 
 #if( configUSE_ALTERNATIVE_API != 0 )

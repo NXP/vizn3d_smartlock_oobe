@@ -27,6 +27,7 @@
 #include "sln_flexio_camera_adapter.h"
 
 #include "sln_gc0308.h"
+#include "app_config.h"
 
 #define CAMERA_NAME "flexio_gc0308"
 /* the default pixel format will be set to RGB which is RGB camera sensor */
@@ -192,7 +193,11 @@ static hal_camera_status_t _HAL_CameraDev_FlexioGc0308_Init(camera_dev_t *dev)
 
     if (flexio_gc0308_format == kPixelFormat_UYVY1P422_RGB)
     {
+#if defined(ENFORCE_FLEXIO_CAMERA_AS_IR) && ENFORCE_FLEXIO_CAMERA_AS_IR
+        CAMERA_DEVICE_Control(&s_CameraDevice, kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_ENABLED);
+#else
         CAMERA_DEVICE_Control(&s_CameraDevice, kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_DISABLED);
+#endif
     }
     else
     {

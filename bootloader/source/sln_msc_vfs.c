@@ -134,13 +134,13 @@ status_t MSC_VFS_WriteResponse(uint32_t offset, uint32_t size, uint8_t *buffer)
             uint32_t *resetHandler = (uint32_t *)(&buffer[4]);
 
             bool isFlash = ((FLASH_BYTE4_UPPER_NIBBLE & *resetHandler) == FLEXSPI_AMBA_BASE);
-            bool isValid = ((FLASH_BYTE3_UPPER_NIBBLE & *resetHandler) == FICA_IMG_APP_A_ADDR) ||
-                           ((FLASH_BYTE3_UPPER_NIBBLE & *resetHandler) == FICA_IMG_APP_B_ADDR);
+            bool isValid = ((FLASH_BYTE3 & *resetHandler) == FICA_IMG_APP_A_ADDR) ||
+                           ((FLASH_BYTE3 & *resetHandler) == FICA_IMG_APP_B_ADDR);
 
             if (isFlash && isValid)
             {
                 int32_t currImgType  = FICA_IMG_TYPE_NONE;
-                uint32_t imgBaseAddr = (uint32_t)(*resetHandler & FLASH_BYTE3_UPPER_NIBBLE);
+                uint32_t imgBaseAddr = (uint32_t)(*resetHandler & FLASH_BYTE3);
 
                 s_transferState = TRANSFER_START;
 

@@ -54,7 +54,7 @@
 typedef uint8_t D4D_FONT_PACK;
 typedef uint8_t D4D_FONT_FLAGS;
 
-typedef uint8_t D4D_FONT_IX;
+typedef uint32_t D4D_FONT_IX;
 typedef uint8_t D4D_FONT_REV;
 
 typedef uint32_t D4D_FONT_OFFSET;

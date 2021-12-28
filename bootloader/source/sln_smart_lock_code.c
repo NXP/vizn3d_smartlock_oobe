@@ -13,15 +13,6 @@
 #include "fsl_pit.h"
 #include "sln_app_specific.h"
 
-#define BOARD_3D_CAMERA_PWR_GPIO       GPIO13
-#define BOARD_3D_CAMERA_PWR_PIN        9U
-#define BOARD_3D_CAMERA_RESET_GPIO     GPIO13
-#define BOARD_3D_CAMERA_RESET_PIN      5U
-#define BOARD_3D_CAMERA_TEST_MODE_GPIO GPIO13
-#define BOARD_3D_CAMERA_TEST_MODE_PIN  11U
-#define BOARD_3D_CAMERA_LDP_INT_GPIO   GPIO13
-#define BOARD_3D_CAMERA_LDP_INT_PIN    12U
-
 static void BOARD_Pull3DCameraResetPin(bool pullUp)
 {
     if (pullUp)

@@ -15,7 +15,7 @@
 #define VERSION_MAJOR 4
 #define VERSION_MINOR 61
 /*this version number only used for hot fix on frozen release or branch*/
-#define VERSION_HOTFIX 1
+#define VERSION_HOTFIX 4
 
 #define INVALID_FACE_ID (0xFFFFUL)
 
@@ -440,6 +440,9 @@ typedef struct
     /*model class */
     OASISLTModelClass_t modClass;
 
+    /* Customized threshold for face recognition. unit: 0.001, range: (0-1000)
+    * if it is 0, default internal threshold is used*/
+    int Threshold;
 } OASISLTInitPara_t;
 
 enum

@@ -32,6 +32,13 @@ typedef enum _event_face_rec_id
     kEventFaceRecID_UpdateUserInfo,
 
     kEventFaceRecID_SaveUserList,
+
+    kEventFaceRecID_SetFaceRecThreshold,
+    kEventFaceRecID_GetFaceRecThreshold,
+
+    kEventFaceRecID_OasisSetState,
+    kEventFaceRecID_OasisGetState,
+
     kEventFaceRecID_COUNT
 } event_face_rec_id_t;
 
@@ -97,6 +104,24 @@ typedef struct _remote_reg_event_t
     remote_reg_data_t *regData;
 } remote_reg_event_t;
 
+typedef struct _faceRecThreshold_event
+{
+    unsigned int min;
+    unsigned int max;
+    unsigned int value;
+} faceRecThreshold_event_t;
+
+typedef enum _oasis_state_t
+{
+    kOasisState_Running = 0,
+    kOasisState_Stopped
+} oasis_state_t;
+
+typedef struct _oasis_state_event_t
+{
+    oasis_state_t state;
+} oasis_state_event_t;
+
 typedef struct _event_face_rec
 {
     event_base_t eventBase;
@@ -109,6 +134,8 @@ typedef struct _event_face_rec
         update_user_event_t updateFace;
         remote_reg_event_t remoteReg;
         wuart_event_t wuart;
+        faceRecThreshold_event_t faceRecThreshold;
+        oasis_state_event_t oasisState;
     };
 } event_face_rec_t;
 

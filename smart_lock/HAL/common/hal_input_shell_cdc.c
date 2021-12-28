@@ -12,7 +12,7 @@
  * @brief shell over USB CDC HAL driver implementation.
  */
 
-#include "board_define.h"
+#include "app_config.h"
 #include <FreeRTOS.h>
 
 #include "fsl_component_serial_manager.h"
@@ -38,7 +38,7 @@
 #include "sln_flash_config.h"
 #include "composite.h"
 #include "fica_definition.h"
-#include "hal_vision_algo_oasis_lite.h"
+#include "hal_vision_algo.h"
 #include "virtual_com.h"
 #include "sln_device_utils.h"
 

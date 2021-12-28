@@ -4,7 +4,7 @@
  * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
  * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
- * applicable license terms, then you may not retain, install, activate or otherwise use the software.
+ * applicable license terms, then you may not retain, install, activate or otherwise use the software
  */
 
 /*${header:start}*/

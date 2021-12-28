@@ -25,6 +25,9 @@ typedef enum _valgo_event
     /* Vision algorithm tries to control LED PWM or CAMERA EXPOSURE */
     kVAlgoEvent_VisionLedPwmControl = MAKE_FRAMEWORK_EVENTS(kStatusFrameworkGroups_VAlgo, 3),
     kVAlgoEvent_VisionCamExpControl = MAKE_FRAMEWORK_EVENTS(kStatusFrameworkGroups_VAlgo, 4),
+    kVAlgoEvent_VisionRecordControl = MAKE_FRAMEWORK_EVENTS(kStatusFrameworkGroups_VAlgo, 5),
+
+    kVAlgoEvent_RequestFrame = MAKE_FRAMEWORK_EVENTS(kStatusFrameworkGroups_VAlgo, 6),
     kVAlgoEvent_Count
 } valgo_event_t;
 
@@ -50,6 +53,9 @@ typedef enum _hal_valgo_status
         MAKE_FRAMEWORK_STATUS(kStatusFrameworkGroups_VAlgo, 2), /*!< algorithm initialization error */
     kStatus_HAL_ValgoError =
         MAKE_FRAMEWORK_STATUS(kStatusFrameworkGroups_VAlgo, 3), /*!< Error occurs in HAL algorithm */
+
+    kStatus_HAL_ValgoStop = MAKE_FRAMEWORK_STATUS(kStatusFrameworkGroups_VAlgo, 4), /*!< HAL algorithm stop */
+
 } hal_valgo_status_t;
 
 typedef struct _valgo_dev_private_capability
@@ -89,6 +95,7 @@ typedef struct _vision_frame
 
 typedef struct
 {
+    int autoStart;
     /* frame type definition */
     vision_frame_t frames[kVAlgoFrameID_Count];
 } vision_algo_private_data_t;

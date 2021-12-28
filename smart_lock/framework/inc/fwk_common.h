@@ -64,8 +64,17 @@ typedef enum _display_output
 {
     kDisplayOutput_Panel = 0,
     kDisplayOutput_UVC,
+    kDisplayOutput_None,
     kDisplayOutput_Invalid,
 } display_output_t;
+
+typedef enum _connectivity_type
+{
+    kConnectivityType_BLE = 0,
+    kConnectivityType_WiFi,
+    kConnectivityType_None,
+    kConnectivityType_Invalid,
+} connectivity_type_t;
 
 typedef enum _pixel_format
 {
@@ -86,6 +95,9 @@ typedef enum _pixel_format
     /* 3d frame format */
     kPixelFormat_Depth16,
     kPixelFormat_Depth8,
+
+    kPixelFormat_YUV420P,
+
     kPixelFormat_Invalid
 } pixel_format_t;
 
@@ -179,7 +191,7 @@ typedef struct _fwk_task_info
 #define MAXIMUM_DISPLAY_DEV          2
 #define MAXIMUM_INPUT_DEV            10
 #define MAXIMUM_OUTPUT_DEV           10
-#define MAXIMUM_VISION_ALGO_DEV      1
+#define MAXIMUM_VISION_ALGO_DEV      2
 #define MAXIMUM_VOICE_ALGO_DEV       1
 #define MAXIMUM_AUDIO_PROCESSING_DEV 1
 

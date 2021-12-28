@@ -27,10 +27,10 @@
 #define FREERTOS_CONFIG_BOARD_H
 /*${macro:start}*/
 
-#if defined(__ICCARM__)||defined(__CC_ARM)||defined(__GNUC__)
-    /* in Kinetis SDK, this contains the system core clock frequency */
-    #include <stdint.h>
-    extern uint32_t SystemCoreClock;
+#if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
+/* in Kinetis SDK, this contains the system core clock frequency */
+#include <stdint.h>
+extern uint32_t SystemCoreClock;
 #endif
 
 /* Interrupt nesting behaviour configuration. Cortex-M specific. */
@@ -60,8 +60,8 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
 standard names. */
-#define vPortSVCHandler SVC_Handler
-#define xPortPendSVHandler PendSV_Handler
+#define vPortSVCHandler     SVC_Handler
+#define xPortPendSVHandler  PendSV_Handler
 #define xPortSysTickHandler SysTick_Handler
 /*${macro:end}*/
 #endif /* FREERTOS_CONFIG_BOARD_H */

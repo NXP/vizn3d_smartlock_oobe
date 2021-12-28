@@ -15,11 +15,11 @@
 #include <task.h>
 #include <stdlib.h>
 #include <time.h>
+#include "hal_sln_timer.h"
 
 #include "fwk_log.h"
 #include "fwk_camera_manager.h"
 #include "hal_camera_dev.h"
-#include "hal_sln_timer.h"
 
 #define CAMERA_NAME             "rgb_sim"
 #define CAMERA_RGB_PIXEL_FORMAT kPixelFormat_YUV1P444_RGB
