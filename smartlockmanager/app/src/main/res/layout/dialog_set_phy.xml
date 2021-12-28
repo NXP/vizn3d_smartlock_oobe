@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dialog_set_phy"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Preferred transmitter(TX) PHY"/>
+
+
+
+        <CheckBox
+            android:id="@+id/r_tx_1m"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:checked="true"
+            android:text="LE 1M(Legacy)"/>
+
+        <CheckBox
+            android:id="@+id/r_tx_2m"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="LE 2M(Double)"/>
+
+        <CheckBox
+            android:id="@+id/r_tx_c"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="LE Coded(Long range)"/>
+    <RadioGroup
+        android:id="@+id/rg_coded"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:paddingLeft="20dp">
+        <RadioButton
+            android:id="@+id/r_s2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:checked="true"
+            android:text="S2(500 kbps*)"/>
+        <RadioButton
+            android:id="@+id/r_s8"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="S8(125 kbps,range x4)"/>
+        <RadioButton
+            android:id="@+id/r_nm"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="No preferred method"/>
+
+    </RadioGroup>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Preferred receiver(RX) PHY"/>
+
+
+        <CheckBox
+            android:id="@+id/r_rx_1m"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:checked="true"
+            android:text="LE 1M(Legacy)"/>
+
+        <CheckBox
+            android:id="@+id/r_rx_2m"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="LE 2M(Double)"/>
+
+        <CheckBox
+            android:id="@+id/r_rx_c"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="LE Coded(Long range)" />
+
+
+</LinearLayout>

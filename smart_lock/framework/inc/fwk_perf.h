@@ -34,10 +34,14 @@ extern "C" {
 /* calculate the current fps of the device */
 float fwk_fps(fwk_fps_type_t type, int id);
 
+/* reset the calculation of the current fps */
+float fwk_fps_reset(fwk_fps_type_t type, int id);
+
 /* get the current fps of the device */
 float fwk_get_fps(fwk_fps_type_t type, int id);
 #else
 #define fwk_fps(x, y)
+#define fwk_fps_reset(x, y)
 #define fwk_get_fps(x, y)
 #endif
 

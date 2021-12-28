@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF383838</color>
+    <color name="white">#FFFCFCFC</color>
+    <color name="colgate_white">#FFFFFFFF</color>
+
+    <color name="colorPrimary">#00fede</color>
+
+    <!-- Swatches -->
+    <color name="swatches_primary">#F55A00</color>
+    <color name="swatches_primary_dark">#c14700</color>
+
+    <!-- Application Theme -->
+    <color name="theme_primary">@color/swatches_primary</color>
+    <color name="theme_primary_dark">@color/swatches_primary_dark</color>
+    <color name="theme_text_primary">#ffffff</color>
+    <color name="theme_text_secondary">#010101</color>
+    <color name="theme_background_content">#ffffff</color>
+
+    <!-- Shadow -->
+    <color name="shadow_start">#44909090</color>
+    <color name="shadow_center">#11909090</color>
+    <color name="shadow_end">#00909090</color>
+
+    <color name="text_green">#0bf511</color>
+    <color name="text_red">#F5001E</color>
+
+    <!-- NXP style colors -->
+    <color name="deeper_orange">#CB4A11</color>
+    <color name="deep_orange">#D54E12</color>
+    <color name="orange">#f02d0f</color>
+    <color name="blue">#248edb</color>
+    <color name="deep_red">#E14848</color>
+    <color name="red">#dd2225</color>
+    <color name="philips_blue">#005aff</color>
+    <color name="button_blue">#48bbe1</color>
+    <color name="temperature_yellow">#fcb315</color>
+    <color name="temperature_gray">#A7A9AC</color>
+    <color name="compass">#F07E28</color>
+    <color name="blue_grey">#63AAC0</color>
+    <color name="dark_grey">#515b5c</color>
+    <color name="grey">#6E6E6E</color>
+    <color name="green">#4eb186</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- Wireless console/UART -->
+    <color name="Deep_Red_Color">#a40044</color>
+    <color name="Philips_Blue_Color">#005aff</color>
+
+    <color name="colorAccent">#FF4081</color>
+
+</resources>

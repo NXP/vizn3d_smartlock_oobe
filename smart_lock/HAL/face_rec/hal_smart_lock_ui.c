@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 
-#include "board_define.h"
+#include "app_config.h"
 
 #include "fonts/font.h"
 #include "icons/ble_16x16.h"
@@ -30,7 +30,7 @@
 #include "hal_event_descriptor_face_rec.h"
 #include "hal_output_dev.h"
 #include "hal_sln_timer.h"
-#include "hal_vision_algo_oasis_lite.h"
+#include "hal_vision_algo.h"
 #include "semphr.h"
 
 #if defined(__cplusplus)
@@ -121,6 +121,26 @@ _|_  |______________________________|  __|_
 #define APP_RELATIVE_X          (LOCK_SPACING + LOCK_WIDTH)
 #define APP_RELATIVE_Y          (4 / UI_SCALE_H)
 
+typedef enum _ui_str_id
+{
+    kUIStrID_Smartlock = 0,
+    kUIStrID_Access2D,
+    kUIStrID_RegisteredUsers,
+    kUIStrID_RecognitionSuccessful,
+    kUIStrID_RecognitionFailed,
+    kUIStrID_Fakeface,
+    kUIStrID_Registering,
+    kUIStrID_RegistrationSuccessful,
+    kUIStrID_NameAdded,
+    kUIStrID_UserAlreadyExists,
+    kUIStrID_NameExists,
+    kUIStrID_RegistrationTimeout,
+    kUIStrID_Deregistering,
+    kUIStrID_NameRemoved,
+    kUIStrID_DeregistrationTimeout,
+    kUIStrID_Recording
+} ui_str_id_t;
+
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
@@ -128,7 +148,7 @@ static hal_output_status_t HAL_OutputDev_UiFfi_Init(const output_dev_t *dev);
 static hal_output_status_t HAL_OutputDev_UiFfi_Start(const output_dev_t *dev);
 static hal_output_status_t HAL_OutputDev_UiFfi_InferComplete(const output_dev_t *dev,
                                                              output_algo_source_t source,
-                                                             void *infer_result);
+                                                             void *inferResult);
 static hal_output_status_t HAL_OutputDev_UiFfi_InputNotify(const output_dev_t *dev, void *data);
 
 /*******************************************************************************
@@ -138,18 +158,58 @@ static gfx_surface_t s_UiSurface;
 
 SDK_ALIGN(static char s_AsBuffer[UI_BUFFER_WIDTH * UI_BUFFER_HEIGHT * UI_BUFFER_BPP], 32);
 
-static oasis_lite_result_t s_LastResult;
+static oasis_lite_result_t s_LastOasisResult;
+static recording_state_t s_LastRecordingState = kRecordingState_Invalid;
 
 const static output_dev_event_handler_t s_OutputDev_UiHandler = {
     .inferenceComplete = HAL_OutputDev_UiFfi_InferComplete,
     .inputNotify       = HAL_OutputDev_UiFfi_InputNotify,
 };
 
-static uint8_t s_BleIsOn;
+static uint8_t s_BleIsOn, s_WiFiIsOn;
 static uint8_t s_LPMIsOn;
 static uint8_t s_LogLevel;
 static uint8_t s_RefreshUI;
 
+#if ENABLE_CHINESE_FONT_DISPLAY
+const static char *s_uiStrResources[] = {
+    {"智能门锁"},        // kUIStrID_Smartlock
+    {"门禁 2D"},         // kUIStrID_Access2D
+    {"已注册用户:%d"},   // kUIStrID_RegisteredUsers
+    {"识别成功"},        // kUIStrID_RecognitionSuccessful
+    {"识别失败"},        // kUIStrID_RecognitionFailed
+    {"假体攻击"},        // kUIStrID_Fakeface
+    {"正在注册"},        // kUIStrID_Registering
+    {"注册成功"},        // kUIStrID_RegistrationSuccessful
+    {"%s 添加成功"},     // kUIStrID_NameAdded
+    {"用户已存在"},      // kUIStrID_UserAlreadyExists
+    {"%s 已存在"},       // kUIStrID_NameExists
+    {"注册超时"},        // kUIStrID_RegistrationTimeout
+    {"正在删除"},        // kUIStrID_Deregistering
+    {"\"%s\" 删除成功"}, // kUIStrID_NameRemoved
+    {"删除超时"},        // kUIStrID_DeregistrationTimeout
+    {"正在录制..."}      // kUIStrID_Recording
+};
+#else
+const static char *s_uiStrResources[] = {
+    {"Smart Lock"},              // kUIStrID_Smartlock
+    {"Access 2D"},               // kUIStrID_Access2D
+    {"Registered Users:%d"},     // kUIStrID_RegisteredUsers
+    {"Recognition Successful"},  // kUIStrID_RecognitionSuccessful
+    {"Recognition Failed"},      // kUIStrID_RecognitionFailed
+    {"Fake Face!"},              // kUIStrID_Fakeface
+    {"Registering"},             // kUIStrID_Registering
+    {"Registration Successful"}, // kUIStrID_RegistrationSuccessful
+    {"%s added"},                // kUIStrID_NameAdded
+    {"User Already Exists"},     // kUIStrID_UserAlreadyExists
+    {"%s exists"},               // kUIStrID_NameExists
+    {"Registration Timeout"},    // kUIStrID_RegistrationTimeout
+    {"Deregistering"},           // kUIStrID_Deregistering
+    {"\"%s\" Removed"},          // kUIStrID_NameRemoved
+    {"Deregistration Timeout"},  // kUIStrID_DeregistrationTimeout
+    {"Recording..."}             // kUIStrID_Recording
+};
+#endif
 /*******************************************************************************
  * Internal Functions
  ******************************************************************************/
@@ -205,7 +265,12 @@ static void _ui_drawTopInfo(oasis_lite_result_t *result)
 {
     char txt[64];
     int bgColor = -1;
-
+    font_t font;
+#if ENABLE_CHINESE_FONT_DISPLAY
+    font = kFront_SourceHanSerifSC11;
+#else
+    font = kFont_OpenSans16;
+#endif
     memset(txt, 0x0, 64);
     switch (result->state)
     {
@@ -215,13 +280,13 @@ static void _ui_drawTopInfo(oasis_lite_result_t *result)
             {
                 case kOASISLiteRecognitionResult_Success:
                 {
-                    sprintf(txt, "Recognition Successful");
+                    sprintf(txt, s_uiStrResources[kUIStrID_RecognitionSuccessful]);
                     bgColor = RGB565_GREEN;
                 }
                 break;
                 case kOASISLiteRecognitionResult_Timeout:
                 {
-                    sprintf(txt, "Recognition Failed");
+                    sprintf(txt, s_uiStrResources[kUIStrID_RecognitionFailed]);
                     bgColor = RGB565_RED;
                 }
                 break;
@@ -230,7 +295,7 @@ static void _ui_drawTopInfo(oasis_lite_result_t *result)
                     {
                         /* The spaces help center the text */
                         /* TODO: Figure out a programmatic way to center text */
-                        sprintf(txt, "          Fake Face!");
+                        sprintf(txt, s_uiStrResources[kUIStrID_Fakeface]);
                         bgColor = RGB565_RED;
                         _ui_eraseTopInfo(bgColor);
                     }
@@ -244,28 +309,28 @@ static void _ui_drawTopInfo(oasis_lite_result_t *result)
             {
                 case kOASISLiteRegistrationResult_Invalid:
                 {
-                    sprintf(txt, "Registering");
+                    sprintf(txt, s_uiStrResources[kUIStrID_Registering]);
                     bgColor = RGB565_GREEN;
                 }
                 break;
 
                 case kOASISLiteRegistrationResult_Success:
                 {
-                    sprintf(txt, "Registration Successful");
+                    sprintf(txt, s_uiStrResources[kUIStrID_RegistrationSuccessful]);
                     bgColor = RGB565_GREEN;
                 }
                 break;
 
                 case kOASISLiteRegistrationResult_Duplicated:
                 {
-                    sprintf(txt, "User Already Exists");
+                    sprintf(txt, s_uiStrResources[kUIStrID_UserAlreadyExists]);
                     bgColor = RGB565_RED;
                 }
                 break;
 
                 case kOASISLiteRegistrationResult_Timeout:
                 {
-                    sprintf(txt, "Registration Timeout");
+                    sprintf(txt, s_uiStrResources[kUIStrID_RegistrationTimeout]);
                     bgColor = RGB565_RED;
                 }
                 break;
@@ -282,21 +347,21 @@ static void _ui_drawTopInfo(oasis_lite_result_t *result)
             {
                 case kOASISLiteDeregistrationResult_Invalid:
                 {
-                    sprintf(txt, "Deregistering");
+                    sprintf(txt, s_uiStrResources[kUIStrID_Deregistering]);
                     bgColor = RGB565_GREEN;
                 }
                 break;
 
                 case kOASISLiteDeregistrationResult_Success:
                 {
-                    sprintf(txt, "\"%s\" Removed", result->name);
+                    sprintf(txt, s_uiStrResources[kUIStrID_NameRemoved], result->name);
                     bgColor = RGB565_GREEN;
                 }
                 break;
 
                 case kOASISLiteDeregistrationResult_Timeout:
                 {
-                    sprintf(txt, "Deregistration Timeout");
+                    sprintf(txt, s_uiStrResources[kUIStrID_DeregistrationTimeout]);
                     bgColor = RGB565_RED;
                 }
                 break;
@@ -314,7 +379,38 @@ static void _ui_drawTopInfo(oasis_lite_result_t *result)
     if (bgColor != -1)
     {
         gfx_drawText(&s_UiSurface, (UI_TOPINFO_X + (UI_MAINWINDOW_W / 2 - 100) / UI_SCALE_W), UI_TOPINFO_Y, 0x0,
-                     bgColor, (int)kFont_OpenSans16, txt);
+                     bgColor, (int)font, txt);
+    }
+}
+
+static void _ui_drawTopInfoRecordingState(recording_state_t *state)
+{
+    char txt[64];
+    int bgColor = -1;
+    font_t font;
+#if ENABLE_CHINESE_FONT_DISPLAY
+    font = kFront_SourceHanSerifSC11;
+#else
+    font = kFont_OpenSans16;
+#endif
+    memset(txt, 0x0, 64);
+    switch ((*state))
+    {
+        case kRecordingState_Start:
+        {
+            sprintf(txt, s_uiStrResources[kUIStrID_Recording]);
+            bgColor = RGB565_GREEN;
+        }
+        break;
+
+        default:
+            break;
+    }
+
+    if (bgColor != -1)
+    {
+        gfx_drawText(&s_UiSurface, (UI_TOPINFO_X + (UI_MAINWINDOW_W / 2 - 100) / UI_SCALE_W), UI_TOPINFO_Y, 0x0,
+                     bgColor, (int)font, txt);
     }
 }
 
@@ -388,6 +484,12 @@ static void ui_drawDebugWindow(oasis_lite_debug_t debugInfo)
 
 static void _ui_drawMainWindow(oasis_lite_result_t *pResult)
 {
+    font_t font;
+#if ENABLE_CHINESE_FONT_DISPLAY
+    font = kFront_SourceHanSerifSC11;
+#else
+    font = kFont_OpenSans16;
+#endif
     if (pResult->state == kOASISLiteState_Registration)
     {
         if (pResult->reg_result == kOASISLiteRegistrationResult_Invalid)
@@ -409,15 +511,15 @@ static void _ui_drawMainWindow(oasis_lite_result_t *pResult)
                     int bgColor = RGB565_GREEN;
                     if (pResult->reg_result == kOASISLiteRegistrationResult_Success)
                     {
-                        sprintf(txt, "%s added", pResult->name);
+                        sprintf(txt, s_uiStrResources[kUIStrID_NameAdded], pResult->name);
                         bgColor = RGB565_GREEN;
                     }
                     else if (pResult->reg_result == kOASISLiteRegistrationResult_Duplicated)
                     {
-                        sprintf(txt, "%s exists", pResult->name);
+                        sprintf(txt, s_uiStrResources[kUIStrID_NameExists], pResult->name);
                         bgColor = RGB565_RED;
                     }
-                    gfx_drawText(&s_UiSurface, x, y, 0x0, bgColor, (int)kFont_OpenSans16, txt);
+                    gfx_drawText(&s_UiSurface, x, y, 0x0, bgColor, (int)font, txt);
                 }
             }
         }
@@ -448,28 +550,33 @@ static void _ui_drawBottomInfo(oasis_lite_result_t *pResult)
     char tstring[64];
     int dbCount     = facedb_get_count();
     uint16_t *pIcon = NULL;
-
+    font_t font;
+#if ENABLE_CHINESE_FONT_DISPLAY
+    font = kFront_SourceHanSerifSC11;
+#else
+    font = kFont_OpenSans8;
+#endif
     _ui_eraseBottomInfo();
     gfx_drawRect(&s_UiSurface, POS_NXPGREEN_RECT_X, POS_RECT_Y, GREEN_RECT_WIDTH, RECT_HEIGHT, RGB565_NXPGREEN);
     gfx_drawRect(&s_UiSurface, POS_NXPBLUE_RECT_X, POS_RECT_Y, BLUE_RECT_WIDTH, RECT_HEIGHT, RGB565_NXPBLUE);
     gfx_drawRect(&s_UiSurface, POS_NXPRED_RECT_X, POS_RECT_Y, RED_RECT_WIDTH, RECT_HEIGHT, RGB565_NXPRED);
 
     memset(tstring, 0x0, 64);
-    sprintf(tstring, "Registered Users:%d", dbCount);
+    sprintf(tstring, s_uiStrResources[kUIStrID_RegisteredUsers], dbCount);
     gfx_drawText(&s_UiSurface, POS_NXPGREEN_RECT_X + REGISTRATION_RELATIVE_X, POS_RECT_Y + REGISTRATION_RELATIVE_Y,
-                 RGB565_BLUE, RGB565_NXPGREEN, kFont_OpenSans8, tstring);
+                 RGB565_BLUE, RGB565_NXPGREEN, font, tstring);
 
     memset(tstring, 0x0, 64);
+
 #ifdef SMART_ACCESS_2D
-    sprintf(tstring, "Access 2D");
+    sprintf(tstring, s_uiStrResources[kUIStrID_Access2D]);
 #else
-    sprintf(tstring, "Smart Lock");
+    sprintf(tstring, s_uiStrResources[kUIStrID_Smartlock]);
 #endif
     gfx_drawText(&s_UiSurface, POS_NXPRED_RECT_X + APP_RELATIVE_X, POS_RECT_Y + APP_RELATIVE_Y, RGB565_BLUE,
-                 RGB565_NXPRED, kFont_OpenSans8, tstring);
+                 RGB565_NXPRED, font, tstring);
 
-    bool wifiIsConnected = 0; // todo
-    if (wifiIsConnected)
+    if (s_WiFiIsOn)
     {
         pIcon = (uint16_t *)wifi16x16_data;
     }
@@ -516,7 +623,7 @@ static hal_output_status_t HAL_OutputDev_UiFfi_Init(const output_dev_t *dev)
     s_UiSurface.buf    = s_AsBuffer;
     s_UiSurface.lock   = xSemaphoreCreateMutex();
 
-    memset(&s_LastResult, 0x0, sizeof(oasis_lite_result_t));
+    memset(&s_LastOasisResult, 0x0, sizeof(oasis_lite_result_t));
     s_LogLevel = FWK_ConfigGetLogLevel();
     return error;
 }
@@ -524,17 +631,24 @@ static hal_output_status_t HAL_OutputDev_UiFfi_Init(const output_dev_t *dev)
 static hal_output_status_t HAL_OutputDev_UiFfi_Start(const output_dev_t *dev)
 {
     hal_output_status_t error = kStatus_HAL_OutputSuccess;
+
     if (FWK_OutputManager_RegisterEventHandler(dev, &s_OutputDev_UiHandler) != 0)
+    {
         error = kStatus_HAL_OutputError;
+    }
+    else
+    {
+        _ui_drawBottomInfo(&s_LastOasisResult);
+    }
+
     return error;
 }
 
 static hal_output_status_t HAL_OutputDev_UiFfi_InferComplete(const output_dev_t *dev,
                                                              output_algo_source_t source,
-                                                             void *infer_result)
+                                                             void *inferResult)
 {
-    hal_output_status_t error    = kStatus_HAL_OutputSuccess;
-    oasis_lite_result_t *pResult = (oasis_lite_result_t *)infer_result;
+    hal_output_status_t error = kStatus_HAL_OutputSuccess;
 
     if (s_LPMIsOn)
     {
@@ -548,6 +662,50 @@ static hal_output_status_t HAL_OutputDev_UiFfi_InferComplete(const output_dev_t 
         return error;
     }
 
+    vision_algo_result_t *visionAlgoResult = (vision_algo_result_t *)inferResult;
+    oasis_lite_result_t *pResult           = NULL;
+    recording_state_t *pRecordingState     = NULL;
+
+    if (visionAlgoResult != NULL)
+    {
+        if (visionAlgoResult->id == kVisionAlgoID_OasisLite)
+        {
+            pResult = (oasis_lite_result_t *)&(visionAlgoResult->oasisLite);
+        }
+        else if (visionAlgoResult->id == kVisionAlgoID_H264Recording)
+        {
+            pRecordingState = (recording_state_t *)&(visionAlgoResult->h264Recording.state);
+        }
+    }
+
+    if (pRecordingState != NULL)
+    {
+        // lock overlay surface to avoid conflict with PXP composing overlay surface
+        if (s_UiSurface.lock)
+        {
+            xSemaphoreTake(s_UiSurface.lock, portMAX_DELAY);
+        }
+
+        if (s_LastRecordingState != (*pRecordingState))
+        {
+            s_LastRecordingState = (*pRecordingState);
+            /* erase top info */
+            _ui_eraseTopInfo(0);
+            /* erase main window */
+            _ui_eraseMainWindow(0);
+            /* erase bottom info */
+            _ui_drawTopInfoRecordingState(pRecordingState);
+            _ui_drawBottomInfo(&s_LastOasisResult);
+        }
+
+        // unlock overlay surface to avoid conflict with PXP composing overlay
+        // surface
+        if (s_UiSurface.lock)
+        {
+            xSemaphoreGive(s_UiSurface.lock);
+        }
+    }
+
     if (pResult != NULL)
     {
         // lock overlay surface to avoid conflict with PXP composing overlay surface
@@ -559,7 +717,15 @@ static hal_output_status_t HAL_OutputDev_UiFfi_InferComplete(const output_dev_t 
         // draw overlay surface begin====>
 
         uint8_t new_results =
-            memcmp(&s_LastResult, pResult, (sizeof(oasis_lite_result_t) - sizeof(oasis_lite_debug_t)));
+            memcmp(&s_LastOasisResult, pResult, (sizeof(oasis_lite_result_t) - sizeof(oasis_lite_debug_t)));
+
+        /* clear the recording state if it started */
+        if (s_LastRecordingState == kRecordingState_Start)
+        {
+            s_LastRecordingState = kRecordingState_Stop;
+            /* erase top info */
+            _ui_eraseTopInfo(0);
+        }
 
         if ((new_results != 0) || (s_RefreshUI))
         {
@@ -588,7 +754,7 @@ static hal_output_status_t HAL_OutputDev_UiFfi_InferComplete(const output_dev_t 
             xSemaphoreGive(s_UiSurface.lock);
         }
 
-        memcpy(&s_LastResult, pResult, sizeof(oasis_lite_result_t));
+        memcpy(&s_LastOasisResult, pResult, sizeof(oasis_lite_result_t));
     }
 
     return error;
@@ -598,6 +764,11 @@ static hal_output_status_t HAL_OutputDev_UiFfi_InputNotify(const output_dev_t *d
 {
     hal_output_status_t error = kStatus_HAL_OutputSuccess;
     event_base_t eventBase    = *(event_base_t *)data;
+
+    if (s_UiSurface.lock)
+    {
+        xSemaphoreTake(s_UiSurface.lock, portMAX_DELAY);
+    }
 
     if (eventBase.eventId == kEventID_SetBLEConnection)
     {
@@ -609,6 +780,17 @@ static hal_output_status_t HAL_OutputDev_UiFfi_InputNotify(const output_dev_t *d
         event_common_t event = *(event_common_t *)data;
         s_LogLevel           = event.logLevel.logLevel;
         s_RefreshUI          = true;
+    }
+    else if (eventBase.eventId == kEventID_WiFiConnected)
+    {
+        event_common_t event = *(event_common_t *)data;
+        s_WiFiIsOn           = event.wifi.isConnected;
+        _ui_drawBottomInfo(&s_LastOasisResult);
+    }
+
+    if (s_UiSurface.lock)
+    {
+        xSemaphoreGive(s_UiSurface.lock);
     }
 
     return error;

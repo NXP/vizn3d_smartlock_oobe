@@ -30,12 +30,12 @@ void Time_Init(unsigned int unit_us)
 #if ORBBECU1S_RESET_IN_BOOTLOADER
 #else
         /* Set PERCLK_CLK source to OSC_CLK*/
-        // CLOCK_SetMux(kCLOCK_PerclkMux, 1U);
+        //CLOCK_SetMux(kCLOCK_PerclkMux, 1U);
         /* Set PERCLK_CLK divider to 1 */
-        // CLOCK_SetDiv(kCLOCK_PerclkDiv, 0U);
+        //CLOCK_SetDiv(kCLOCK_PerclkDiv, 0U);
         /*
-         * pitConfig.enableRunInDebug = false;
-         */
+        * pitConfig.enableRunInDebug = false;
+        */
         PIT_GetDefaultConfig(&pitConfig);
         /* Init pit module */
         PIT_Init(PIT1, &pitConfig);
@@ -58,7 +58,7 @@ void Time_Init(unsigned int unit_us)
         PIT_StartTimer(PIT1, pit_c1);
         PIT_StartTimer(PIT1, pit_c0);
         TimeInited = 1;
-        TimeUnit   = unit_us;
+        TimeUnit = unit_us;
     }
 }
 

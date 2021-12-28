@@ -12,7 +12,7 @@
  */
 
 #include <FreeRTOS.h>
-#include "board_define.h"
+#include "app_config.h"
 #include "fsl_gpc.h"
 #include "fsl_gpio.h"
 

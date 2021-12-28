@@ -1,0 +1,91 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+repositories {
+    maven { url "https://jitpack.io" }
+    mavenCentral()
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
+
+    viewBinding {
+        enabled = true
+    }
+
+    defaultConfig {
+        applicationId "com.smartlockmanager"
+        minSdkVersion 22
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            moduleName "JniAlgorithm"
+            abiFilters "armeabi-v7a"
+        }
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path 'src/main/jni/Android.mk'
+        }
+    }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ["src/main/libs"]
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    ndkVersion '22.0.7026061'
+}
+
+dependencies {
+    def room_version = "2.3.0"
+
+    implementation 'androidx.lifecycle:lifecycle-process:2.3.1'
+    implementation 'com.google.android.gms:play-services-location:18.0.0'
+    implementation "androidx.cardview:cardview:1.0.0"
+    implementation "androidx.viewpager2:viewpager2:1.0.0"
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation "androidx.constraintlayout:constraintlayout:2.0.4"
+    implementation "androidx.constraintlayout:constraintlayout-compose:1.0.0-alpha05"
+    implementation 'com.google.android.material:material:1.4.0-alpha02'
+    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'org.greenrobot:eventbus:3.2.0'
+    implementation 'org.apache.directory.studio:org.apache.commons.io:2.4'
+    implementation 'com.jakewharton:butterknife:10.2.1'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.1'
+    implementation('com.afollestad.material-dialogs:core:0.8.6.2@aar') {
+        //exclude group: 'com.android.support'  // uncomment to force our local support lib version
+        transitive = true
+    }
+    implementation 'org.apache.commons:commons-lang3:3.4'
+}
+
+def getDate() {
+    return new Date().format('MM - dd - YYYY')
+}

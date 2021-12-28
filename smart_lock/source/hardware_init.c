@@ -11,7 +11,7 @@
  * @brief  RT117F hardware configuration and initialization.
  */
 
-#include "board_define.h"
+#include "app_config.h"
 
 #include "board.h"
 #include "pin_mux.h"
@@ -139,8 +139,8 @@ status_t BOARD_LPI2C_Receive(LPI2C_Type *base,
 }
 
 #if defined(SDK_SW_SPI) && SDK_SW_SPI
-#define CS_L  (BOARD_ELCDIF_DISPLAY_SPI_CS_GPIO->DR &= ~(1 << BOARD_ELCDIF_DISPLAY_SPI_CS_PIN))
-#define CS_H  (BOARD_ELCDIF_DISPLAY_SPI_CS_GPIO->DR |= 1 << BOARD_ELCDIF_DISPLAY_SPI_CS_PIN)
+#define CS_L (BOARD_ELCDIF_DISPLAY_SPI_CS_GPIO->DR &= ~(1 << BOARD_ELCDIF_DISPLAY_SPI_CS_PIN))
+#define CS_H (BOARD_ELCDIF_DISPLAY_SPI_CS_GPIO->DR |= 1 << BOARD_ELCDIF_DISPLAY_SPI_CS_PIN)
 #define SCL_L (BOARD_ELCDIF_DISPLAY_SPI_SCL_GPIO->DR &= ~(1 << BOARD_ELCDIF_DISPLAY_SPI_SCL_PIN))
 #define SCL_H (BOARD_ELCDIF_DISPLAY_SPI_SCL_GPIO->DR |= 1 << BOARD_ELCDIF_DISPLAY_SPI_SCL_PIN)
 #define SDA_L (BOARD_ELCDIF_DISPLAY_SPI_SDA_GPIO->DR &= ~(1 << BOARD_ELCDIF_DISPLAY_SPI_SDA_PIN))
@@ -358,6 +358,30 @@ void Board_PullFlexioCameraResetPin(bool pullUp)
     }
 }
 
+void BOARD_AWAN510_WLAN_enable(bool enable)
+{
+    if (enable)
+    {
+        GPIO_PinWrite(BOARD_WIFI_AWAM510_WLAN_ENABLE_GPIO, BOARD_WIFI_AWAM510_WLAN_ENABLE_PIN, 1U);
+    }
+    else
+    {
+        GPIO_PinWrite(BOARD_WIFI_AWAM510_WLAN_ENABLE_GPIO, BOARD_WIFI_AWAM510_WLAN_ENABLE_PIN, 0U);
+    }
+}
+
+void BOARD_AWAN510_BT_enable(bool enable)
+{
+    if (enable)
+    {
+        GPIO_PinWrite(BOARD_WIFI_AWAM510_BT_ENABLE_GPIO, BOARD_WIFI_AWAM510_BT_ENABLE_PIN, 1U);
+    }
+    else
+    {
+        GPIO_PinWrite(BOARD_WIFI_AWAM510_BT_ENABLE_GPIO, BOARD_WIFI_AWAM510_BT_ENABLE_PIN, 0U);
+    }
+}
+
 void BOARD_PullFlexioCameraPowerDownPin(bool pullUp)
 {
     if (pullUp)
@@ -503,7 +527,6 @@ void BOARD_InitElcdifRk024hh298Resource(void)
     pin_config.outputLogic = 0;
     GPIO_PinInit(BOARD_ELCDIF_DISPLAY_SPI_SCL_GPIO, BOARD_ELCDIF_DISPLAY_SPI_SCL_PIN, &pin_config);
 
-    /* backlight = 0, lcd work normally. Before splash screen ready, set 1 to power down backlight. */
     /* turn off the backlight. */
     board_elcdif_rk024hh298_backlight_control(0);
 }
@@ -584,16 +607,24 @@ void BOARD_InitCSICameraResource(void)
 
 void BOARD_InitBleQn9090Resource(void)
 {
+    /* here move gpio pin mux into bootloader to avoid noise on UART interface,
+     * it will affect QN9090 UART read. */
     gpio_pin_config_t pin_config = {
         .direction = kGPIO_DigitalOutput, .outputLogic = 0U, .interruptMode = kGPIO_NoIntmode};
 
-    BOARD_InitBluetoothQn9090Pins();
     GPIO_PinInit(BOARD_BLE_QN9090_QN_WAKEUP_GPIO, BOARD_BLE_QN9090_QN_WAKEUP_PIN, &pin_config);
 }
 
 void BOARD_InitWIFIAW_AM510Resource(void)
 {
     BOARD_InitWiFiPins();
+    gpio_pin_config_t pinConfig = {
+        .direction   = kGPIO_DigitalOutput,
+        .outputLogic = 1,
+    };
+    GPIO_PinInit(BOARD_WIFI_AWAM510_WLAN_ENABLE_GPIO, BOARD_WIFI_AWAM510_WLAN_ENABLE_PIN, &pinConfig);
+    pinConfig.outputLogic = 0;
+    GPIO_PinInit(BOARD_WIFI_AWAM510_BT_ENABLE_GPIO, BOARD_WIFI_AWAM510_BT_ENABLE_PIN, &pinConfig);
 }
 
 void BOARD_InitEDMA()
@@ -638,6 +669,9 @@ void BOARD_InitHardware(void)
     BOARD_InitPushButtonPins();
     BOARD_InitLedPins();
     Time_Init(1);
+    // TODO 1. boot pin config
+    // TODO 2. boot clk config for minimum power efficiency
+    // TODO 3. debug console, can be off in release version.
 }
 
 void GPIO2_Combined_16_31_IRQHandler(void)
@@ -665,6 +699,7 @@ void GPIO2_Combined_16_31_IRQHandler(void)
         }
         else
         {
+            // TODO
             portYIELD_FROM_ISR(HigherPriorityTaskWoken);
         }
     }
@@ -674,7 +709,8 @@ void GPIO2_Combined_0_15_IRQHandler(void)
     uint32_t intPin        = 0x00;
     uint32_t pushButtonInt = 0x00;
     // Get interrupt flag for the GPIO
-    intPin        = GPIO_PortGetInterruptFlags(GPIO2);
+    intPin = GPIO_PortGetInterruptFlags(GPIO2);
+
     pushButtonInt = (1 << BOARD_BUTTON_SW1_PIN);
 
     // Check for the interrupt pin on the GPIO for USER_BUTTON (SW7)
@@ -694,6 +730,7 @@ void GPIO2_Combined_0_15_IRQHandler(void)
         }
         else
         {
+            // TODO
             portYIELD_FROM_ISR(HigherPriorityTaskWoken);
         }
     }
@@ -704,7 +741,8 @@ void GPIO13_Combined_0_31_IRQHandler(void)
     uint32_t intPin        = 0x00;
     uint32_t pushButtonInt = 0x00;
     // Get interrupt flag for the GPIO
-    intPin        = GPIO_PortGetInterruptFlags(GPIO13);
+    intPin = GPIO_PortGetInterruptFlags(GPIO13);
+
     pushButtonInt = (1 << BOARD_USER_BUTTON_GPIO_PIN);
 
     // Check for the interrupt pin on the GPIO for USER_BUTTON (SW7)
@@ -723,6 +761,7 @@ void GPIO13_Combined_0_31_IRQHandler(void)
         }
         else
         {
+            // TODO
             portYIELD_FROM_ISR(HigherPriorityTaskWoken);
         }
     }

@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 
-#include "board_define.h"
+#include "app_config.h"
 
 #include "fonts/font.h"
 #include "icons/welcomehome_320x122.h"
@@ -23,7 +23,7 @@
 #include "fwk_graphics.h"
 #include "fwk_output_manager.h"
 #include "hal_output_dev.h"
-#include "hal_vision_algo_oasis_lite.h"
+#include "hal_vision_algo.h"
 #include "hal_event_descriptor_face_rec.h"
 #include "hal_sln_timer.h"
 #include "semphr.h"
@@ -91,7 +91,7 @@ static hal_output_status_t HAL_OutputDev_UiFfi_Init(const output_dev_t *dev);
 static hal_output_status_t HAL_OutputDev_UiFfi_Start(const output_dev_t *dev);
 static hal_output_status_t HAL_OutputDev_UiFfi_InferComplete(const output_dev_t *dev,
                                                              output_algo_source_t source,
-                                                             void *infer_result);
+                                                             void *inferResult);
 static hal_output_status_t HAL_OutputDev_UiFfi_InputNotify(const output_dev_t *dev, void *data);
 
 /*******************************************************************************
@@ -347,10 +347,16 @@ static hal_output_status_t HAL_OutputDev_UiFfi_Start(const output_dev_t *dev)
 
 static hal_output_status_t HAL_OutputDev_UiFfi_InferComplete(const output_dev_t *dev,
                                                              output_algo_source_t source,
-                                                             void *infer_result)
+                                                             void *inferResult)
 {
-    hal_output_status_t error    = kStatus_HAL_OutputSuccess;
-    oasis_lite_result_t *pResult = (oasis_lite_result_t *)infer_result;
+    hal_output_status_t error = kStatus_HAL_OutputSuccess;
+
+    vision_algo_result_t *visionAlgoResult = (vision_algo_result_t *)inferResult;
+    oasis_lite_result_t *pResult           = NULL;
+    if ((visionAlgoResult != NULL) && (visionAlgoResult->id == kVisionAlgoID_OasisLite))
+    {
+        pResult = &(visionAlgoResult->oasisLite);
+    }
 
     if (pResult != NULL)
     {

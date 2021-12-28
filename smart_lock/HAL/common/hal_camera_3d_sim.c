@@ -15,12 +15,11 @@
 #include <task.h>
 #include <stdlib.h>
 #include <time.h>
+#include "hal_sln_timer.h"
 
 #include "fwk_log.h"
 #include "fwk_camera_manager.h"
 #include "hal_camera_dev.h"
-#include "hal_sln_timer.h"
-
 #include "hal_camera_3d_sim_ir_frame.h"
 #include "hal_camera_3d_sim_depth_frame.h"
 

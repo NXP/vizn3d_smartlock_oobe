@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/status_bar"
+    android:layout_width="match_parent"
+    android:layout_height="36dp"
+    android:background="@color/deep_orange"
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/status_connection"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:text="Status: Disconnected"
+        android:textColor="@color/theme_text_primary"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/status_battery"
+        android:drawablePadding="4dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical|right"
+        android:textColor="@color/theme_text_primary"
+        android:textSize="14sp" />
+</LinearLayout>

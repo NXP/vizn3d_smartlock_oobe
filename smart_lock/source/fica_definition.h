@@ -70,7 +70,7 @@
 #define FICA_IMG_BOOTLOADER_SIZE (0x001C0000) /* 1.75 MB */
 #else
 #define FICA_IMG_BOOTSTRAP_SIZE  (0x00000000) /* 0.00 MB */
-#define FICA_IMG_BOOTLOADER_SIZE (0x00200000) /* 2.00 MB */
+#define FICA_IMG_BOOTLOADER_SIZE (0x00100000) /* 1.00 MB */
 #endif
 
 #if FLASH_SIZE < 0x1000000U
@@ -80,8 +80,8 @@
 #elif FLASH_SIZE < 0x2000000U
 /* 16MB <= FLASH_SIZE < 32MB */
 #define FICA_IMG_RESERVED_SIZE (0x00000000) /* 0   MB - toolbox - deprecated */
-#define FICA_IMG_APP_A_SIZE    (0x00600000) /* 6   MB */
-#define FICA_IMG_APP_B_SIZE    (0x00600000) /* 6   MB */
+#define FICA_IMG_APP_A_SIZE    (0x00680000) /* 6.5   MB */
+#define FICA_IMG_APP_B_SIZE    (0x00680000) /* 6.5   MB */
 
 #else
 /* FLASH_SIZE >= 32MB */
@@ -122,6 +122,14 @@
 #if FICA_FREE_MEM_START_ADDR > FICA_FREE_MEM_END_ADDR
 #error "Some memory sections overlap due to insufficient flash memory."
 #endif
+
+
+/* Used to check if flash address is valid */
+#define FICA_IMG_FLASH_MASK				(0xF0000000)
+#define FICA_IMG_BANK_START_ADDR_MASK  	(0x00FF0000)
+
+/* Used to check flash addresses for Bank A vs Bank B */
+#define FICA_IMG_BANK_APP_MASK  (FICA_IMG_BANK_START_ADDR_MASK + FICA_IMG_FLASH_MASK)
 
 /*******************************************************************************
  * FICA typedefs

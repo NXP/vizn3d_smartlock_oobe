@@ -11,7 +11,7 @@
  * @brief  display over usb_cdc implementation.
  */
 
-#include "board_define.h"
+#include "app_config.h"
 #include <FreeRTOS.h>
 
 #include "fsl_component_serial_manager.h"
@@ -28,8 +28,11 @@
 
 #include "sln_flash_config.h"
 #include "fica_definition.h"
-#include "hal_vision_algo_oasis_lite.h"
+#include "hal_vision_algo.h"
 #include "sln_device_utils.h"
+#include "wm_net.h"
+
+#include "face_rec_rt_info.h"
 
 /*******************************************************************************
  * Definitions
@@ -51,12 +54,18 @@ static shell_status_t _WhitePwmCommand(shell_handle_t shellContextHandle, int32_
 static shell_status_t _IrPwmCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 static shell_status_t _SpeakerVolumeCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 static shell_status_t _LpmTriggerCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
+static shell_status_t _ConnectivityCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
+static shell_status_t _WiFiCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 static shell_status_t _BleAddressCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 
 static shell_status_t _GetManagerCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 static shell_status_t _ListCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 static shell_status_t _RenameCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 static shell_status_t _VerboseCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
+static shell_status_t _RecordCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
+static shell_status_t _RtInfoCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
+static shell_status_t _OasisCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
+static shell_status_t _FaceRecThresholdCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 
 static int _FrameworkEventsHandler(framework_events_t eventId,
                                    framework_response_t *response,
@@ -87,8 +96,8 @@ static SHELL_COMMAND_DEFINE(add,
                             _AddCommand,
                             SHELL_IGNORE_PARAMETER_COUNT);
 static SHELL_COMMAND_DEFINE(del, (char *)"\r\n\"del -n <username>\": Del user by username.\r\n"
-		"\"del -i <id>\": Del user by id.\r\n"
-		"\"del -a \": Del all.\r\n", _DelCommand, SHELL_IGNORE_PARAMETER_COUNT);
+        "\"del -i <id>\": Del user by id.\r\n"
+        "\"del -a \": Del all.\r\n", _DelCommand, SHELL_IGNORE_PARAMETER_COUNT);
 static SHELL_COMMAND_DEFINE(display_output,
                      (char *)"\r\n\"display_output <UVC|panel> \": Set display device.\r\n"
                     		 "\"display_output\": Get the display device.\r\n"
@@ -117,9 +126,29 @@ static SHELL_COMMAND_DEFINE(
             "or disable.\r\n"
             "\"lpm\": Return the current low status <enable | disable>\r\n",
     _LpmTriggerCommand, SHELL_IGNORE_PARAMETER_COUNT);
+static SHELL_COMMAND_DEFINE(connectivity,
+                            (char *)"\r\n\"connectivity type <wifi/ble/none>\": Select type off connectivity .\r\n",
+                            _ConnectivityCommand,
+                            SHELL_IGNORE_PARAMETER_COUNT);
 static SHELL_COMMAND_DEFINE(ble,
                             (char *)"\r\n\"ble address\": get ble advertising address.\r\n",
                             _BleAddressCommand,
+                            SHELL_IGNORE_PARAMETER_COUNT);
+
+static SHELL_COMMAND_DEFINE(wifi,
+                            (char *)"\r\n\"wifi ssid <SSID>\": Set the SSID\r\n"
+                                    "\"wifi password <Password>\": Set the Password\r\n"
+                                    "\"wifi ip \": Get the IP\r\n"
+                                    "\"wifi credentials\": get the current WiFi credentials saved in flash.\r\n"
+                                    "\"wifi credentials erase\": Remove the current WiFi credentials. After erase the WiFi will disconnected from the network.\r\n"
+                                    "\"wifi state <on/off>\": Turn on and off the WiFi.\r\n"
+                                    "\"wifi state\": Get current state of the WiFi.\r\n"
+                                    "\"wifi reset\": Reset the WiFi connection.\r\n"
+                            		"\"wifi scan\": Start the scan process. This will return a json list with <SSID><signal><channel> after the scan is completed.\r\n"
+                                    "\"wifi ftp_server <IP> <PORT>\": Set FTP server IP and port.\r\n"
+                                    "\"wifi ftp_server \": Set FTP server IP and port.\r\n"
+                            ,
+                            _WiFiCommand,
                             SHELL_IGNORE_PARAMETER_COUNT);
 static SHELL_COMMAND_DEFINE(
     list,
@@ -136,10 +165,34 @@ static SHELL_COMMAND_DEFINE(log_level,
                      _VerboseCommand,
                      SHELL_IGNORE_PARAMETER_COUNT);
 static SHELL_COMMAND_DEFINE(get_manager, (char *)"\r\n\"get_manager\": get list of all active managers.\r\n"
-								"\r\n\"get_manager <id>\": get devices registered to a specific manager\r\n", _GetManagerCommand, SHELL_IGNORE_PARAMETER_COUNT);
+								"\"get_manager <id>\": get devices registered to a specific manager\r\n", _GetManagerCommand, SHELL_IGNORE_PARAMETER_COUNT);
+
+static SHELL_COMMAND_DEFINE(record,
+                            (char *)"\r\n\"record <start|stop>\": start/stop the record.\r\n"
+                            "\"record info\": get recording info\r\n",
+                            _RecordCommand,
+                            SHELL_IGNORE_PARAMETER_COUNT);
+static SHELL_COMMAND_DEFINE(oasis,
+                            (char *)"\r\n\"oasis <start|stop>\": start/stop oasis\r\n"
+                            "\"oasis info\": get the state of oasis.\r\n",
+                            _OasisCommand,
+                            SHELL_IGNORE_PARAMETER_COUNT);
+
+static SHELL_COMMAND_DEFINE(rtinfo,
+                            (char *)"\r\n\"rtinfo\": runtime information filter\r\n",
+                            _RtInfoCommand,
+                            SHELL_IGNORE_PARAMETER_COUNT);
+
+static SHELL_COMMAND_DEFINE(facerec_threshold,
+                            (char *)"\r\n\"facerec_threshold\": show the current face recognition threshold\r\n"
+                            "\"facerec_threshold <value>\": set the face recognition threshold."
+                            " Note: The board will reset to make the updated threshold take effect.\r\n",
+                            _FaceRecThresholdCommand,
+                            SHELL_IGNORE_PARAMETER_COUNT);
 
 static event_common_t s_CommonEvent;
 static event_face_rec_t s_FaceRecEvent;
+static event_recording_t s_RecordingEvent;
 static input_event_t s_InputEvent;
 static framework_request_t s_FrameworkRequest;
 static input_dev_callback_t s_InputCallback;
@@ -172,8 +225,18 @@ void APP_InputDev_Shell_RegisterShellCommands(shell_handle_t shellContextHandle,
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(white_pwm));
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(volume));
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(lpm));
+    SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(connectivity));
+#if ENABLE_WIFI
+    SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(wifi));
+#endif
+#if ENABLE_QN9090
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(ble));
+#endif
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(get_manager));
+    SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(record));
+    SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(rtinfo));
+    SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(oasis));
+    SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(facerec_threshold));
 }
 
 #define PRINT_DEVICE_CONFIG_TABLE_ENTRY(DEV_ID, DEV_NAME, CONFIG_NAME, CONFIG_CUR_VAL, CONFIG_EXPECTED_VALS,        \
@@ -325,7 +388,7 @@ static int _HalEventsHandler(uint32_t event_id, void *response, event_status_t s
             {
                 char savedStatus[10];
                 face_user_info_t userInfo = usersInfo.userInfo[index];
-                sprintf(savedStatus, userInfo.isSaved ? "Saved" : "Not saved");
+                strcpy(savedStatus, userInfo.isSaved ? "Saved" : "Not saved");
                 SHELL_Printf(s_ShellHandle, "\r\n%-10s - Id %3d \tName - %s", savedStatus, userInfo.id, userInfo.name);
             }
         }
@@ -415,13 +478,231 @@ static int _HalEventsHandler(uint32_t event_id, void *response, event_status_t s
             }
         }
         break;
+        case kEventID_GetConnectivityType:
+        {
+            connectivity_event_t connectivity = *(connectivity_event_t *)response;
+            if (status == kEventStatus_Ok)
+            {
+                char connectivityTypeText[10];
+                if (connectivity.connectivityType == kConnectivityType_BLE)
+                {
+                    strcpy(connectivityTypeText, "BLE");
+                }
+                else if (connectivity.connectivityType == kConnectivityType_WiFi)
+                {
+                    strcpy(connectivityTypeText, "WiFi");
+                }
+                else
+                {
+                    strcpy(connectivityTypeText, "None");
+                }
+                SHELL_Printf(s_ShellHandle, "\r\nConnectivity type is currently set to \"%s\".", connectivityTypeText);
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to get current connectivity type.");
+            }
+        }
+        break;
+        case kEventID_SetConnectivityType:
+        {
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nConnectivity type set. Reset..");
+                vTaskDelay(1);
+                __NVIC_SystemReset();
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nConnectivity type set failed.");
+            }
+        }
+        break;
+        case kEventID_WiFiEraseCredentials:
+        {
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nWiFi Credentials erased.");
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nWiFi Credentials erased failed.");
+            }
+        }
+        break;
+        case kEventID_WiFiSetCredentials:
+        {
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nWiFi Credentials set with success.");
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nWiFi Credentials set failed.");
+            }
+        }
+        break;
+        case kEventID_WiFiGetCredentials:
+        {
+            wifi_cred_t wifiCred = ((wifi_event_t *)response)->wifiCred;
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nWiFi Credentials SSID %s PASS %s.", wifiCred.ssid.value,
+                             wifiCred.password.value);
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to get WiFi credentials.");
+            }
+        }
+        break;
+        case kEventID_WiFiSetState:
+        {
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nWiFi state set with success");
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to set WiFi state.");
+            }
+        }
+        break;
+        case kEventID_WiFiGetState:
+        {
+            wifi_state_t wifiState = ((wifi_event_t *)response)->state;
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nWiFi state is %s.", (wifiState == kWiFi_On) ? "On" : "Off");
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to get WiFi state.");
+            }
+        }
+        break;
+        case kEventID_WiFiGetIP:
+        {
+            char *ip = ((wifi_event_t *)response)->ip;
+            if ((status == kEventStatus_Ok) && ip != NULL)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nWiFi IP is %s", ip);
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to get WiFi ip.");
+            }
+        }
+        break;
+        case kEventID_WiFiScan:
+        {
+            if (status == kEventStatus_NonBlocking)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\n WiFi start scanning");
+            }
+            else if (status == kEventStatus_Error)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\n WiFi failed to start scanning");
+            }
+            else if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\n SSID json list %s", (char *)response);
+            }
+        }
+        break;
+        case kEventID_FTPSetServerInfo:
+        {
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFTP info set with success");
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to set FTP info.");
+            }
+        }
+        break;
+        case kEventID_FTPGetServerInfo:
+        {
+            char *server_info = ((wifi_event_t *)response)->ftpServerInfoSerialized;
+            if ((status == kEventStatus_Ok) && server_info != NULL)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFTP server info is %s", server_info);
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to get FTP server info.");
+            }
+        }
+        break;
+        case kEventID_FTPSetServerIP:
+        {
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFTP ip address set with success");
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to set FTP ip address.");
+            }
+        }
+        break;
+        case kEventID_FTPGetServerIP:
+        {
+            char *ip = ((wifi_event_t *)response)->ip;
+            if ((status == kEventStatus_Ok) && ip != NULL)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFTP server IP is %s", ip);
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to get FTP server ip.");
+            }
+        }
+        break;
+        case kEventID_FTPSetServerPort:
+        {
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFTP server port set with success");
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to set FTP server port.");
+            }
+        }
+        break;
+        case kEventID_FTPGetServerPort:
+        {
+            uint16_t port = ((wifi_event_t *)response)->ftpServerInfo.serverPort;
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFTP server port is %d", port);
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFailed to get FTP server port.");
+            }
+        }
+        break;
         case kEventID_GetDisplayOutput:
         {
             display_output_event_t display = *(display_output_event_t *)response;
             if (status == kEventStatus_Ok)
             {
                 char displayText[10];
-                strcpy(displayText, display.displayOutput == kDisplayOutput_Panel ? "PANEL" : "UVC");
+                if (display.displayOutput == kDisplayOutput_Panel)
+                {
+                    strcpy(displayText, "PANEL");
+                }
+                else if (display.displayOutput == kDisplayOutput_UVC)
+                {
+                    strcpy(displayText, "UVC");
+                }
+                else
+                {
+                    strcpy(displayText, "None");
+                }
                 SHELL_Printf(s_ShellHandle, "\r\nDisplay output is currently set to \"%s\".", displayText);
             }
             else
@@ -480,8 +761,71 @@ static int _HalEventsHandler(uint32_t event_id, void *response, event_status_t s
                 SHELL_Printf(s_ShellHandle, "\r\nGet low power mode status failed.");
             }
         }
-
         break;
+        case kEventID_RecordingInfo:
+        {
+            recording_info_t recordedInfo = *(recording_info_t *)response;
+            if (status == kEventStatus_Ok)
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nH.264 clip start:0x%x size:0x%x state:%d", recordedInfo.start,
+                             recordedInfo.size, recordedInfo.state);
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nRecorded error");
+            }
+        }
+        break;
+        case kEventFaceRecID_OasisSetState:
+        case kEventFaceRecID_OasisGetState:
+        {
+            event_face_rec_t oasisResponse = *(event_face_rec_t *)response;
+            if (status == kEventStatus_Ok)
+            {
+                if (oasisResponse.oasisState.state == kOasisState_Running)
+                {
+                    SHELL_Printf(s_ShellHandle, "\r\nOasis mode: Running");
+                }
+                else if (oasisResponse.oasisState.state == kOasisState_Stopped)
+                {
+                    SHELL_Printf(s_ShellHandle, "\r\nOasis mode: Stopped");
+                }
+            }
+            else if (status == kEventStatus_Error)
+            {
+                if (oasisResponse.oasisState.state == kOasisState_Running)
+                {
+                    SHELL_Printf(s_ShellHandle, "\r\nOasis it's already running");
+                }
+                else if (oasisResponse.oasisState.state == kOasisState_Stopped)
+                {
+                    SHELL_Printf(s_ShellHandle, "\r\nOasis it's already stopped");
+                }
+            }
+        }
+        break;
+        case kEventFaceRecID_SetFaceRecThreshold:
+        case kEventFaceRecID_GetFaceRecThreshold:
+        {
+            if (status == kEventStatus_Ok)
+            {
+                faceRecThreshold_event_t *pFaceRecThreshold = (faceRecThreshold_event_t *)response;
+                SHELL_Printf(s_ShellHandle, "\r\nFace recognition threshold: %d, range[%d - %d]",
+                             pFaceRecThreshold->value, pFaceRecThreshold->min, pFaceRecThreshold->max);
+
+                /* reset the system to make the face recognition threshold setting takes effect */
+                if (event_id == kEventFaceRecID_SetFaceRecThreshold)
+                {
+                    __NVIC_SystemReset();
+                }
+            }
+            else
+            {
+                SHELL_Printf(s_ShellHandle, "\r\nFace recognition threshold error");
+            }
+        }
+        break;
+
         default:
             break;
     }
@@ -872,6 +1216,8 @@ static shell_status_t _SaveCommand(shell_handle_t shellContextHandle, int32_t ar
         s_InputCallback(s_SourceShell, kInputEventID_Recv, receiverList, &s_InputEvent, sizeof(s_FaceRecEvent),
                         fromISR);
     }
+
+    return kStatus_SHELL_Success;
 }
 
 static shell_status_t _VersionCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
@@ -887,16 +1233,17 @@ static shell_status_t _VersionCommand(shell_handle_t shellContextHandle, int32_t
         /* Find the current running bank by checking the ResetISR Address in the vector table (which is loaded into
          * DTC) */
         uint32_t runningFromBankA = (((*(uint32_t *)(APPLICATION_RESET_ISR_ADDRESS)-FLEXSPI_AMBA_BASE) &
-                                      (FICA_IMG_APP_A_ADDR)) == FICA_IMG_APP_A_ADDR);
+                                      (FICA_IMG_BANK_APP_MASK)) == FICA_IMG_APP_A_ADDR);
 
-        uint32_t runningFromBankb = (((*(uint32_t *)(APPLICATION_RESET_ISR_ADDRESS)-FLEXSPI_AMBA_BASE) &
-                                      (FICA_IMG_APP_B_ADDR)) == FICA_IMG_APP_B_ADDR);
+        uint32_t runningFromBankB = (((*(uint32_t *)(APPLICATION_RESET_ISR_ADDRESS)-FLEXSPI_AMBA_BASE) &
+                                      (FICA_IMG_BANK_APP_MASK)) == FICA_IMG_APP_B_ADDR);
+
 
         if (runningFromBankA)
         {
             SHELL_Printf(shellContextHandle, "App running in bankA\r\n");
         }
-        else if (runningFromBankb)
+        else if (runningFromBankB)
         {
             SHELL_Printf(shellContextHandle, "App running in bankB\r\n");
         }
@@ -1019,7 +1366,6 @@ static shell_status_t _IrPwmCommand(shell_handle_t shellContextHandle, int32_t a
 {
     uint32_t receiverList;
     char *pEnd;
-    uint8_t brightness;
 
     if (argc > 2)
     {
@@ -1034,13 +1380,19 @@ static shell_status_t _IrPwmCommand(shell_handle_t shellContextHandle, int32_t a
     }
     else
     {
-        brightness = (uint8_t)strtol(argv[1], &pEnd, 10);
-        if ((brightness < 0) || (100 < brightness))
+        uint32_t brightness = strtol(argv[1], &pEnd, 10);
+        if (argv[1] == pEnd)
         {
-            SHELL_Printf(shellContextHandle, "PWM duty of %d\% outside of acceptable range\r\n", &brightness);
+            SHELL_Printf(shellContextHandle, "\"%s\" not a number.\r\n", argv[1]);
             return kStatus_SHELL_Error;
         }
-        s_CommonEvent.irLed.brightness  = brightness;
+        else if ((brightness < 0) || (100 < brightness))
+        {
+            SHELL_Printf(shellContextHandle, "PWM duty of %s outside of acceptable range. Valid values are 0->100\r\n",
+                         argv[1]);
+            return kStatus_SHELL_Error;
+        }
+        s_CommonEvent.irLed.brightness  = (uint8_t)brightness;
         s_CommonEvent.eventBase.eventId = kEventID_SetIRLedBrightness;
     }
 
@@ -1060,7 +1412,6 @@ static shell_status_t _WhitePwmCommand(shell_handle_t shellContextHandle, int32_
 {
     uint32_t receiverList;
     char *pEnd;
-    uint8_t brightness;
 
     if (argc > 2)
     {
@@ -1075,13 +1426,19 @@ static shell_status_t _WhitePwmCommand(shell_handle_t shellContextHandle, int32_
     }
     else
     {
-        brightness = (uint8_t)strtol(argv[1], &pEnd, 10);
-        if ((brightness < 0) || (100 < brightness))
+        uint32_t brightness = strtol(argv[1], &pEnd, 10);
+        if (argv[1] == pEnd)
         {
-            SHELL_Printf(shellContextHandle, "PWM duty of %d\% outside of acceptable range\r\n", &brightness);
+            SHELL_Printf(shellContextHandle, "\"%s\" not a number.\r\n", argv[1]);
             return kStatus_SHELL_Error;
         }
-        s_CommonEvent.whiteLed.brightness = brightness;
+        else if ((brightness < 0) || (100 < brightness))
+        {
+            SHELL_Printf(shellContextHandle, "PWM duty of %s outside of acceptable range. Valid values are 0->100\r\n",
+                         argv[1]);
+            return kStatus_SHELL_Error;
+        }
+        s_CommonEvent.whiteLed.brightness = (uint8_t)brightness;
         s_CommonEvent.eventBase.eventId   = kEventID_SetWhiteLedBrightness;
     }
 
@@ -1101,7 +1458,6 @@ static shell_status_t _SpeakerVolumeCommand(shell_handle_t shellContextHandle, i
 {
     uint32_t receiverList;
     char *pEnd;
-    uint8_t volume;
 
     if (argc > 2)
     {
@@ -1116,15 +1472,20 @@ static shell_status_t _SpeakerVolumeCommand(shell_handle_t shellContextHandle, i
     }
     else
     {
-        volume = (uint8_t)strtol(argv[1], &pEnd, 10);
-        if ((volume < 0) || (100 < volume))
+        uint32_t volume = strtol(argv[1], &pEnd, 10);
+        if (argv[1] == pEnd)
         {
-            SHELL_Printf(shellContextHandle, "Volume %d outside of acceptable range. Valid values are 0->100. \r\n",
-                         volume);
+            SHELL_Printf(shellContextHandle, "\"%s\" not a number.\r\n", argv[1]);
+            return kStatus_SHELL_Error;
+        }
+        else if ((volume < 0) || (100 < volume))
+        {
+            SHELL_Printf(shellContextHandle, "Volume %s outside of acceptable range. Valid values are 0->100. \r\n",
+                         argv[1]);
             return kStatus_SHELL_Error;
         }
         s_CommonEvent.eventBase.eventId    = kEventID_SetSpeakerVolume;
-        s_CommonEvent.speakerVolume.volume = volume;
+        s_CommonEvent.speakerVolume.volume = (uint8_t)volume;
     }
 
     receiverList = 1 << kFWKTaskID_Output;
@@ -1184,9 +1545,276 @@ static shell_status_t _LpmTriggerCommand(shell_handle_t shellContextHandle, int3
     return kStatus_SHELL_Success;
 }
 
+static shell_status_t _ConnectivityCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
+{
+    uint32_t receiverList;
+    shell_status_t status = kStatus_SHELL_Success;
+
+    if (argc == 2)
+    {
+        if (!strcmp((char *)argv[1], "type"))
+        {
+            s_CommonEvent.eventBase.eventId = kEventID_GetConnectivityType;
+        }
+        else
+        {
+            SHELL_Printf(shellContextHandle, "Invalid parameters supplied\r\n");
+            status = kStatus_SHELL_Error;
+        }
+    }
+    else if (argc == 3)
+    {
+        if (!strcmp((char *)argv[1], "type"))
+        {
+            s_CommonEvent.eventBase.eventId = kEventID_SetConnectivityType;
+            if (!strcmp((char *)argv[2], "wifi"))
+            {
+                s_CommonEvent.connectivity.connectivityType = kConnectivityType_WiFi;
+            }
+            else if (!strcmp((char *)argv[2], "ble"))
+            {
+                s_CommonEvent.connectivity.connectivityType = kConnectivityType_BLE;
+            }
+            else if (!strcmp((char *)argv[2], "none"))
+            {
+                s_CommonEvent.connectivity.connectivityType = kConnectivityType_None;
+            }
+            else
+            {
+                SHELL_Printf(shellContextHandle, "Invalid type parameters supplied\r\n");
+                status = kStatus_SHELL_Error;
+            }
+        }
+        else
+        {
+            SHELL_Printf(shellContextHandle, "Invalid parameters supplied\r\n");
+            status = kStatus_SHELL_Error;
+        }
+    }
+    else
+    {
+        SHELL_Printf(shellContextHandle, "Invalid # of parameters supplied\r\n");
+        status = kStatus_SHELL_Error;
+    }
+
+    if (status == kStatus_SHELL_Success)
+    {
+        receiverList                    = 1 << kFWKTaskID_Output;
+        s_CommonEvent.eventBase.respond = _HalEventsHandler;
+        if (s_InputCallback != NULL)
+        {
+            uint8_t fromISR        = __get_IPSR();
+            s_InputEvent.inputData = &s_CommonEvent;
+            s_InputCallback(s_SourceShell, kInputEventID_Recv, receiverList, &s_InputEvent, sizeof(s_CommonEvent),
+                            fromISR);
+        }
+    }
+
+    return status;
+}
+
+static shell_status_t _WiFiCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
+{
+    uint32_t receiverList;
+    shell_status_t status = kStatus_SHELL_Success;
+
+    if (FWK_ConfigGetConnectivityType() != kConnectivityType_WiFi)
+    {
+        SHELL_Printf(shellContextHandle, "Set connectivity type to WiFi and reset\r\n");
+        return kStatus_SHELL_Error;
+    }
+
+    if (argc < 2)
+    {
+        SHELL_Printf(shellContextHandle, "Invalid # of parameters supplied\r\n");
+        return kStatus_SHELL_Error;
+    }
+
+    if (!strcmp((char *)argv[1], "credentials"))
+    {
+        receiverList = 1 << kFWKTaskID_Input;
+
+        if (argc == 2)
+        {
+            s_CommonEvent.eventBase.eventId = kEventID_WiFiGetCredentials;
+        }
+        else if (argc == 3)
+        {
+            if (!strcmp((char *)argv[2], "erase"))
+            {
+                s_CommonEvent.eventBase.eventId = kEventID_WiFiEraseCredentials;
+            }
+            else
+            {
+                status = kStatus_SHELL_Error;
+            }
+        }
+        else
+        {
+            status = kStatus_SHELL_Error;
+        }
+    }
+    else if (!strcmp((char *)argv[1], "ip"))
+    {
+        receiverList = 1 << kFWKTaskID_Input;
+        if (argc == 2)
+        {
+            s_CommonEvent.eventBase.eventId = kEventID_WiFiGetIP;
+        }
+        else
+        {
+            status = kStatus_SHELL_Error;
+        }
+    }
+    else if (!strcmp((char *)argv[1], "ssid"))
+    {
+        if (argc > 2)
+        {
+            receiverList          = 1 << kFWKTaskID_Input;
+            wifi_cred_t *wifiCred = &s_CommonEvent.wifi.wifiCred;
+            memset(wifiCred, 0, sizeof(wifi_cred_t));
+            s_CommonEvent.eventBase.eventId = kEventID_WiFiSetCredentials;
+            wifiCred->ssid.length           = WIFI_SSID_LENGTH;
+            wifiCred->ssid.length =
+                mergeParameters((char *)&(wifiCred->ssid.value), wifiCred->ssid.length, &argv[2], (uint32_t)(argc - 2));
+            if (wifiCred->ssid.length == 0)
+            {
+                status = kStatus_SHELL_Error;
+            }
+        }
+        else
+        {
+            status = kStatus_SHELL_Error;
+        }
+    }
+    else if (!strcmp((char *)argv[1], "password"))
+    {
+        if (argc > 2)
+        {
+            receiverList          = 1 << kFWKTaskID_Input;
+            wifi_cred_t *wifiCred = &s_CommonEvent.wifi.wifiCred;
+            memset(wifiCred, 0, sizeof(wifi_cred_t));
+            s_CommonEvent.eventBase.eventId = kEventID_WiFiSetCredentials;
+            wifiCred->password.length       = WIFI_PASSWORD_LENGTH;
+            wifiCred->password.length = mergeParameters((char *)&(wifiCred->password.value), wifiCred->password.length,
+                                                        &argv[2], (uint32_t)(argc - 2));
+            if (wifiCred->password.length == 0)
+            {
+                status = kStatus_SHELL_Error;
+            }
+        }
+        else
+        {
+            status = kStatus_SHELL_Error;
+        }
+    }
+    else if (!strcmp((char *)argv[1], "state"))
+    {
+        receiverList = 1 << kFWKTaskID_Input;
+        if (argc == 2)
+        {
+            s_CommonEvent.eventBase.eventId = kEventID_WiFiGetState;
+        }
+        else if (argc == 3)
+        {
+            if (!strcmp((char *)argv[2], "on"))
+            {
+                s_CommonEvent.eventBase.eventId = kEventID_WiFiSetState;
+                s_CommonEvent.wifi.state        = kWiFi_On;
+            }
+            else if (!strcmp((char *)argv[2], "off"))
+            {
+                s_CommonEvent.eventBase.eventId = kEventID_WiFiSetState;
+                s_CommonEvent.wifi.state        = kWiFi_Off;
+            }
+            else
+            {
+                status = kStatus_SHELL_Error;
+            }
+        }
+    }
+    else if (!strcmp((char *)argv[1], "reset"))
+    {
+        receiverList = 1 << kFWKTaskID_Input;
+        if (argc == 2)
+        {
+            s_CommonEvent.eventBase.eventId = kEventID_WiFiReset;
+        }
+        else
+        {
+            status = kStatus_SHELL_Error;
+        }
+    }
+    else if (!strcmp((char *)argv[1], "scan"))
+    {
+        receiverList = 1 << kFWKTaskID_Input;
+        if (argc == 2)
+        {
+            s_CommonEvent.eventBase.eventId = kEventID_WiFiScan;
+        }
+        else
+        {
+            status = kStatus_SHELL_Error;
+        }
+    }
+    else if (!strcmp((char *)argv[1], "ftp_server"))
+    {
+        receiverList = 1 << kFWKTaskID_Input;
+        if (argc == 2)
+        {
+            s_CommonEvent.eventBase.eventId = kEventID_FTPGetServerInfo;
+        }
+        else if (argc == 4)
+        {
+            char *pEnd;
+            s_CommonEvent.eventBase.eventId           = kEventID_FTPSetServerInfo;
+            s_CommonEvent.wifi.ftpServerInfo.serverIP = net_inet_aton(argv[2]);
+
+            uint32_t port = strtol(argv[3], &pEnd, 10);
+            if (pEnd == argv[3] || port > (uint16_t)(-1))
+            {
+                SHELL_Printf(shellContextHandle, "Not a valid port\r\n");
+                return kStatus_SHELL_Error;
+            }
+
+            s_CommonEvent.wifi.ftpServerInfo.serverPort = port;
+        }
+        else
+        {
+            status = kStatus_SHELL_Error;
+        }
+    }
+    else
+    {
+        status = kStatus_SHELL_Error;
+    }
+
+    if (status == kStatus_SHELL_Error)
+    {
+        SHELL_Printf(shellContextHandle, "Invalid parameters supplied\r\n");
+        return kStatus_SHELL_Error;
+    }
+
+    if (s_InputCallback != NULL)
+    {
+        uint8_t fromISR                 = __get_IPSR();
+        s_InputEvent.inputData          = &s_CommonEvent;
+        s_CommonEvent.eventBase.respond = _HalEventsHandler;
+        s_InputCallback(s_SourceShell, kInputEventID_Recv, receiverList, &s_InputEvent, sizeof(s_CommonEvent), fromISR);
+    }
+
+    return status;
+}
+
 static shell_status_t _BleAddressCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
 {
     uint32_t receiverList;
+
+    if (FWK_ConfigGetConnectivityType() != kConnectivityType_BLE)
+    {
+        SHELL_Printf(shellContextHandle, "Set connectivity type to BLE and reset\r\n");
+        return kStatus_SHELL_Error;
+    }
 
     if (argc != 2)
     {
@@ -1213,6 +1841,254 @@ static shell_status_t _BleAddressCommand(shell_handle_t shellContextHandle, int3
         s_CommonEvent.eventBase.respond = _HalEventsHandler;
         s_InputCallback(s_SourceShell, kInputEventID_Recv, receiverList, &s_InputEvent, sizeof(s_CommonEvent), fromISR);
     }
+
+    return kStatus_SHELL_Success;
+}
+
+static shell_status_t _RecordCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
+{
+    uint32_t receiverList;
+
+    if (argc != 2)
+    {
+        SHELL_Printf(shellContextHandle, "Invalid # of parameters supplied\r\n");
+        return kStatus_SHELL_Error;
+    }
+
+    if (!strcmp((char *)argv[1], "start"))
+    {
+        s_RecordingEvent.eventBase.eventId = kEventID_RecordingState;
+        s_RecordingEvent.state             = kRecordingState_Start;
+    }
+    else if (!strcmp((char *)argv[1], "stop"))
+    {
+        s_RecordingEvent.eventBase.eventId = kEventID_RecordingState;
+        s_RecordingEvent.state             = kRecordingState_Stop;
+    }
+    else if (!strcmp((char *)argv[1], "info"))
+    {
+        s_RecordingEvent.eventBase.eventId = kEventID_RecordingInfo;
+        s_RecordingEvent.eventBase.respond = _HalEventsHandler;
+        s_RecordingEvent.state             = kRecordingState_Info;
+    }
+    else
+    {
+        SHELL_Printf(shellContextHandle, "Wrong command\r\n");
+        return kStatus_SHELL_Error;
+    }
+
+    receiverList = 1 << kFWKTaskID_VisionAlgo;
+
+    if (s_InputCallback != NULL)
+    {
+        uint8_t fromISR        = __get_IPSR();
+        s_InputEvent.inputData = &s_RecordingEvent;
+        s_InputCallback(s_SourceShell, kInputEventID_Recv, receiverList, &s_InputEvent, sizeof(s_RecordingEvent),
+                        fromISR);
+    }
+
+    return kStatus_SHELL_Success;
+}
+
+static shell_status_t _RtInfoCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
+{
+    char *pEnd;
+
+    if (argc == 2)
+    {
+        if (!strcmp((char *)argv[1], "size"))
+        {
+            /* print the runtime information start address and size */
+            unsigned char *pStart = NULL;
+            unsigned int size     = 0;
+            FaceRecRtInfo_Size(&pStart, &size);
+            if (pStart && size)
+            {
+                SHELL_Printf(shellContextHandle, "\"%s\" start:0x%x size:0x%x\r\n", argv[1], pStart, size);
+            }
+            return kStatus_SHELL_Success;
+        }
+        else if (!strcmp((char *)argv[1], "clean"))
+        {
+            /* clean the captured runtime information */
+            FaceRecRtInfo_Clean();
+            return kStatus_SHELL_Success;
+        }
+        else if (!strcmp((char *)argv[1], "disable"))
+        {
+            /* disable all the filters */
+            FaceRecRtInfo_Disable();
+            return kStatus_SHELL_Success;
+        }
+        else
+        {
+            SHELL_Printf(shellContextHandle, "Invalid # of parameters supplied\r\n");
+            return kStatus_SHELL_Error;
+        }
+    }
+    else if ((argc == 3) || (argc == 4))
+    {
+        uint32_t tmp;
+        face_rec_rt_info_id_t id = kFaceRecRtInfoId_Count;
+        unsigned char enable     = 0;
+        unsigned char filter     = 0;
+
+        if (!strcmp((char *)argv[1], "global"))
+        {
+            id = kFaceRecRtInfoId_Global;
+        }
+        else if (!strcmp((char *)argv[1], "detect"))
+        {
+            id = kFaceRecRtInfoId_Detect;
+        }
+        else if (!strcmp((char *)argv[1], "fake"))
+        {
+            id = kFaceRecRtInfoId_Fake;
+        }
+        else if (!strcmp((char *)argv[1], "facerec"))
+        {
+            id = kFaceRecRtInfoId_FaceFecognize;
+        }
+        else
+        {
+            tmp = strtol(argv[1], &pEnd, 10);
+            if (argv[1] == pEnd)
+            {
+                SHELL_Printf(shellContextHandle, "\"%s\" invalid item id.\r\n", argv[1]);
+                return kStatus_SHELL_Error;
+            }
+
+            if ((tmp >= kFaceRecRtInfoId_Global) && (tmp < kFaceRecRtInfoId_Count))
+            {
+                id = (face_rec_rt_info_id_t)tmp;
+            }
+        }
+
+        /* check the item id */
+        if (id > kFaceRecRtInfoId_Count)
+        {
+            SHELL_Printf(shellContextHandle, "\"%s\" invalid item id.\r\n", argv[1]);
+            return kStatus_SHELL_Error;
+        }
+
+        tmp = strtol(argv[2], &pEnd, 10);
+        if ((argv[2] == pEnd) || ((tmp != 0) && (tmp != 1)))
+        {
+            SHELL_Printf(shellContextHandle, "\"%s\" invalid enable flag.\r\n", argv[2]);
+            return kStatus_SHELL_Error;
+        }
+        enable = (unsigned char)tmp;
+
+        if (argc == 4)
+        {
+            tmp = strtol(argv[3], &pEnd, 10);
+            if ((argv[3] == pEnd) || ((tmp != 0) && (tmp != 1) && (tmp != 2)))
+            {
+                SHELL_Printf(shellContextHandle, "\"%s\" invalid enable flag.\r\n", argv[3]);
+                return kStatus_SHELL_Error;
+            }
+            filter = tmp;
+        }
+
+        SHELL_Printf(shellContextHandle, "id:0x%02x enable:%d filter:%d\r\n", id, enable, filter);
+        FaceRecRtInfo_Filter(id, enable, filter);
+    }
+    else
+    {
+        SHELL_Printf(shellContextHandle, "Invalid # of parameters supplied\r\n");
+        return kStatus_SHELL_Error;
+    }
+
+    return kStatus_SHELL_Success;
+}
+
+static shell_status_t _OasisCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
+{
+    uint32_t receiverList;
+
+    if (argc != 2)
+    {
+        SHELL_Printf(shellContextHandle, "Invalid # of parameters supplied\r\n");
+        return kStatus_SHELL_Error;
+    }
+
+    memset(&s_FaceRecEvent, 0, sizeof(s_FaceRecEvent));
+
+    if (!strcmp((char *)argv[1], "start"))
+    {
+        s_FaceRecEvent.eventBase.eventId = kEventFaceRecID_OasisSetState;
+        s_FaceRecEvent.oasisState.state  = kOasisState_Running;
+    }
+    else if (!strcmp((char *)argv[1], "stop"))
+    {
+        s_FaceRecEvent.eventBase.eventId = kEventFaceRecID_OasisSetState;
+        s_FaceRecEvent.oasisState.state  = kOasisState_Stopped;
+    }
+    else if (!strcmp((char *)argv[1], "info"))
+    {
+        s_FaceRecEvent.eventBase.eventId = kEventFaceRecID_OasisGetState;
+    }
+    else
+    {
+        SHELL_Printf(shellContextHandle, "Wrong command\r\n");
+        return kStatus_SHELL_Error;
+    }
+    s_FaceRecEvent.eventBase.respond = _HalEventsHandler;
+
+    receiverList = 1 << kFWKTaskID_VisionAlgo;
+
+    if (s_InputCallback != NULL)
+    {
+        uint8_t fromISR        = __get_IPSR();
+        s_InputEvent.inputData = &s_FaceRecEvent;
+        s_InputCallback(s_SourceShell, kInputEventID_Recv, receiverList, &s_InputEvent, sizeof(s_FaceRecEvent),
+                        fromISR);
+    }
+
+    return kStatus_SHELL_Success;
+}
+
+static shell_status_t _FaceRecThresholdCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
+{
+    char *pEnd;
+
+    if (argc > 2)
+    {
+        SHELL_Printf(shellContextHandle, "Invalid # of parameters supplied\r\n");
+        return kStatus_SHELL_Error;
+    }
+
+    uint32_t receiverList            = 1 << kFWKTaskID_Output;
+    s_FaceRecEvent.eventBase.respond = _HalEventsHandler;
+
+    if (argc == 1)
+    {
+        s_FaceRecEvent.eventBase.eventId = kEventFaceRecID_GetFaceRecThreshold;
+        // SHELL_Printf(shellContextHandle, "Current threshold: %d Range:[%d - %d]\r\n");
+    }
+    else
+    {
+        uint32_t threshold = strtol(argv[1], &pEnd, 10);
+        if (argv[1] == pEnd)
+        {
+            SHELL_Printf(shellContextHandle, "\"%s\" not a number.\r\n", argv[1]);
+            return kStatus_SHELL_Error;
+        }
+        else if ((threshold < MINIMUM_FACE_REC_THRESHOLD) || (MAXIMUM_FACE_REC_THRESHOLD < threshold))
+        {
+            SHELL_Printf(shellContextHandle, "Face recognition threshold %s out of range. Valid values are %d-->%d\r\n",
+                         argv[1], MINIMUM_FACE_REC_THRESHOLD, MAXIMUM_FACE_REC_THRESHOLD);
+            return kStatus_SHELL_Error;
+        }
+        s_FaceRecEvent.faceRecThreshold.min   = MINIMUM_FACE_REC_THRESHOLD;
+        s_FaceRecEvent.faceRecThreshold.max   = MAXIMUM_FACE_REC_THRESHOLD;
+        s_FaceRecEvent.faceRecThreshold.value = threshold;
+        s_FaceRecEvent.eventBase.eventId      = kEventFaceRecID_SetFaceRecThreshold;
+    }
+
+    uint8_t fromISR        = __get_IPSR();
+    s_InputEvent.inputData = &s_FaceRecEvent;
+    s_InputCallback(s_SourceShell, kInputEventID_Recv, receiverList, &s_InputEvent, sizeof(s_FaceRecEvent), fromISR);
 
     return kStatus_SHELL_Success;
 }

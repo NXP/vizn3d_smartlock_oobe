@@ -12,13 +12,13 @@
 #include <stdint.h>
 #include "FreeRTOS.h"
 #include "task.h"
-
+#include "fica_definition.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
 
-#define FLASH_BYTE4_UPPER_NIBBLE 0xF0000000 /* Used to ensure binary is using an address in flash */
-#define FLASH_BYTE3_UPPER_NIBBLE 0x00F00000 /* Used to get start addr of a binary */
+#define FLASH_BYTE4_UPPER_NIBBLE FICA_IMG_FLASH_MASK /* Used to ensure binary is using an address in flash */
+#define FLASH_BYTE3              FICA_IMG_BANK_START_ADDR_MASK /* Used to get start addr of a binary */
 
 typedef enum __transfer_state
 {

@@ -11,7 +11,7 @@
  * @brief  shell over UART HAL driver implementation.
  */
 
-#include "board_define.h"
+#include "app_config.h"
 #include <stdarg.h>
 #include "fsl_component_serial_manager.h"
 #include "fsl_debug_console.h"

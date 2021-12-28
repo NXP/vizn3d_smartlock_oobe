@@ -7,8 +7,8 @@
  * FileName: cambo.cpp
  *****************************************************************************/
 
-#include <fonts/cambo.h>
 #include <stddef.h>
+#include <ui_resources/fonts/cambo.h>
 
 const unsigned char d4dfnt_Cambo10_data_table[] = {
 

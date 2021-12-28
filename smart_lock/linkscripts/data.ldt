@@ -3,6 +3,13 @@
         *fsl_flexspi.o(.text*)
         *sln_flash.o(.text*)
         *libsln_afe.a:(.text*)
-        *liboasis_lite2D_DEFAULT_117f_ae.a:(.text*)
-        *liboasis_lite3D_DEFAULT_117f_ae.a:(.text*)
+        *libopenh264_m7.a:(.text*)
+        
+        /* please put this line here, some function must be mapped to X (X-flash_address < 0x40000000)
+         * it can't be put in SDRAM. flashaddress: 0x30000000, SDRAM address:0x80000000'*/
+        *libgcc.a:(.text*) 
+        
+        /* FreeRTOS Debug Config, Move from Flash to here*/
+        *tasks.o(.rodata*) 
 </#if>
+

@@ -1,0 +1,5 @@
+/*This file must be remained here, otherwise MCUXpresso IDE will automatically insert
+ * following line in the linkscript file and keep const data in tasks.c file in TEXT section:
+ *  KEEP(*tasks.o(.rodata*))
+ */
+ 

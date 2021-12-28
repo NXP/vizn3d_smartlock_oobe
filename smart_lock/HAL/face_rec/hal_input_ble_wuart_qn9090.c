@@ -14,7 +14,7 @@
 #include <FreeRTOS.h>
 #include <queue.h>
 
-#include "board_define.h"
+#include "app_config.h"
 #include "board.h"
 #include "fsl_lpuart_freertos.h"
 #include "fsl_lpuart.h"

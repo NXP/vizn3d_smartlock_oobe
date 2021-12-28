@@ -1,9 +1,10 @@
 /*
- * Copyright 2020-2021 NXP
- * All rights reserved.
- *
- *
- * SPDX-License-Identifier: BSD-3-Clause
+ * Copyright 2020-2021 NXP.
+ * This software is owned or controlled by NXP and may only be used strictly in accordance with the
+ * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
+ * activating and/or otherwise using the software, you are agreeing that you have read, and that you
+ * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
+ * applicable license terms, then you may not retain, install, activate or otherwise use the software.
  */
 
 /*
@@ -282,7 +283,8 @@ static void FLEXIO_CameraXclkConfig(FLEXIO_CAMERA_Type *csiConfig, flexio_camera
     timerConfig.timerEnable     = kFLEXIO_TimerEnabledAlways;
     timerConfig.timerStop       = kFLEXIO_TimerStopBitDisabled;
     timerConfig.timerStart      = kFLEXIO_TimerStartBitDisabled;
-    timerConfig.timerCompare    = 0x0404; /* 120MHz clock source generates 24MHz clock.*/
+    // timerConfig.timerCompare    = 0x0102; /* 120MHz clock source generates 24MHz clock.*/
+    timerConfig.timerCompare = 0x0404; /* 120MHz clock source generates 12MHz clock.*/
 
     FLEXIO_SetTimerConfig(csiConfig->flexioBase, xclkConfig->timerIdx, &timerConfig);
 }

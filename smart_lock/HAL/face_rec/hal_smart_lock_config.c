@@ -19,8 +19,9 @@
 #include "hal_output_dev.h"
 #include "hal_smart_lock_config.h"
 #include "hal_event_descriptor_common.h"
+#include "hal_event_descriptor_face_rec.h"
 #include "hal_lpm_dev.h"
-#include "board_define.h"
+#include "app_config.h"
 
 /* Temporary fix */
 /* TODO: Remove this define */
@@ -28,7 +29,7 @@
 #include "hal_voice_algo_asr_local.h"
 #endif
 
-#define APP_CONFIG_VERSION_MINOR 0x3
+#define APP_CONFIG_VERSION_MINOR 0x4
 #define APP_CONFIG_VERSION_MAJOR 0x0
 #define APP_CONFIG_VERSION       (((APP_CONFIG_VERSION_MAJOR << 16) & 0xFF00) | (APP_CONFIG_VERSION_MINOR & 0xFF))
 
@@ -162,6 +163,84 @@ static hal_output_status_t _HAL_OutputDev_ConfigInputNotify(const output_dev_t *
             if (eventBase.respond != NULL)
             {
                 eventBase.respond(eventBase.eventId, &event.displayOutput, eventResponseStatus, true);
+            }
+        }
+        break;
+        case kEventID_SetConnectivityType:
+        {
+            event_status_t eventResponseStatus   = kEventStatus_Ok;
+            event_common_t event                 = *(event_common_t *)data;
+            connectivity_type_t connectivityType = FWK_ConfigGetConnectivityType();
+            if (connectivityType != event.connectivity.connectivityType)
+            {
+                hal_config_status_t status;
+                status = FWK_ConfigSetConnectivityType(event.connectivity.connectivityType);
+                if (status == kSLNConfigStatus_Error)
+                {
+                    LOGE("Failed to write connectivity type config");
+                    eventResponseStatus = kEventStatus_Error;
+                }
+                else
+                {
+                    LOGI("Connectivity type set successfully");
+                }
+            }
+            else
+            {
+                LOGI("Connectivity type specified is the same as the current setting.");
+            }
+
+            if (eventBase.respond != NULL)
+            {
+                eventBase.respond(eventBase.eventId, &event.connectivity, eventResponseStatus, true);
+            }
+        }
+        break;
+        case kEventID_GetConnectivityType:
+        {
+            connectivity_event_t connectivity;
+            event_status_t eventResponseStatus = kEventStatus_Ok;
+            connectivity.connectivityType      = FWK_ConfigGetConnectivityType();
+            if (eventBase.respond != NULL)
+            {
+                eventBase.respond(eventBase.eventId, &connectivity, eventResponseStatus, true);
+            }
+        }
+        break;
+        case kEventFaceRecID_GetFaceRecThreshold:
+        {
+            faceRecThreshold_event_t faceRecThreshold;
+            event_status_t eventResponseStatus = kEventStatus_Error;
+            hal_config_status_t ret            = kSLNConfigStatus_Success;
+            faceRecThreshold.min               = MINIMUM_FACE_REC_THRESHOLD;
+            faceRecThreshold.max               = MAXIMUM_FACE_REC_THRESHOLD;
+            ret = HAL_OutputDev_SmartLockConfig_GetFaceRecThreshold(&faceRecThreshold.value);
+            if (eventBase.respond != NULL)
+            {
+                if (ret == kSLNConfigStatus_Success)
+                {
+                    eventResponseStatus = kEventStatus_Ok;
+                }
+                eventBase.respond(eventBase.eventId, &faceRecThreshold, eventResponseStatus, true);
+            }
+        }
+        break;
+        case kEventFaceRecID_SetFaceRecThreshold:
+        {
+            event_status_t eventResponseStatus = kEventStatus_Error;
+            event_face_rec_t *pEvent           = (event_face_rec_t *)data;
+            hal_config_status_t ret            = kSLNConfigStatus_Success;
+            if (pEvent)
+            {
+                ret = HAL_OutputDev_SmartLockConfig_SetFaceRecThreshold(pEvent->faceRecThreshold.value);
+                if (eventBase.respond != NULL)
+                {
+                    if (ret == kSLNConfigStatus_Success)
+                    {
+                        eventResponseStatus = kEventStatus_Ok;
+                    }
+                    eventBase.respond(eventBase.eventId, &(pEvent->faceRecThreshold), eventResponseStatus, true);
+                }
             }
         }
         break;
@@ -381,6 +460,37 @@ hal_config_status_t HAL_OutputDev_SmartLockConfig_SetSleepMode(uint8_t sleepMode
     return ret;
 }
 
+hal_config_status_t HAL_OutputDev_SmartLockConfig_GetFaceRecThreshold(unsigned int *pThreshold)
+{
+    hal_config_status_t ret              = kSLNConfigStatus_Error;
+    smart_lock_config_t *smartLockConfig = (smart_lock_config_t *)FWK_ConfigLockAppData();
+
+    if (smartLockConfig != NULL)
+    {
+        *pThreshold = smartLockConfig->faceRecThreshold;
+        ret         = kSLNConfigStatus_Success;
+        FWK_ConfigUnlockAppData(false);
+    }
+
+    return ret;
+}
+
+hal_config_status_t HAL_OutputDev_SmartLockConfig_SetFaceRecThreshold(unsigned int threshold)
+{
+    hal_config_status_t ret              = kSLNConfigStatus_Error;
+    smart_lock_config_t *smartLockConfig = (smart_lock_config_t *)FWK_ConfigLockAppData();
+
+    if ((smartLockConfig != NULL) &&
+        ((threshold >= MINIMUM_FACE_REC_THRESHOLD) && (threshold <= MAXIMUM_FACE_REC_THRESHOLD)))
+    {
+        smartLockConfig->faceRecThreshold = threshold;
+        ret                               = kSLNConfigStatus_Success;
+        FWK_ConfigUnlockAppData(true);
+    }
+
+    return ret;
+}
+
 /* Temporary fix */
 /* TODO: Remove this define */
 #if defined(ENABLE_VOICE)
@@ -575,6 +685,7 @@ hal_config_status_t HAL_OutputDev_SmartLockConfig_Init()
             app_config.irPwm = 50;
 #endif
             memcpy(app_config.password, "000000", sizeof(app_config.password));
+            app_config.faceRecThreshold = DEFAULT_FACE_REC_THRESHOLD;
             FWK_ConfigSetAppData(&app_config, sizeof(smart_lock_config_t), APP_CONFIG_VERSION);
         }
     }

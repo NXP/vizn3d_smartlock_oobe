@@ -14,6 +14,9 @@
 #ifndef _HAL_EVENT_DESCRIPTOR_COMMON_H_
 #define _HAL_EVENT_DESCRIPTOR_COMMON_H_
 
+#include "wifi_credentials.h"
+#include "ftp_client.h"
+
 typedef enum _event_type
 {
     kEventType_Common  = 0x00,
@@ -33,8 +36,30 @@ typedef enum _event_id
     kEventID_SetWhiteLedBrightness,
     kEventID_GetSpeakerVolume,
     kEventID_SetSpeakerVolume,
+
+    kEventID_SetConnectivityType,
+    kEventID_GetConnectivityType,
     kEventID_SetBLEConnection,
     kEventID_GetBLEConnection,
+
+    kEventID_WiFiEraseCredentials,
+    kEventID_WiFiSetCredentials,
+    kEventID_WiFiGetCredentials,
+    kEventID_WiFiSetState,
+    kEventID_WiFiGetState,
+    kEventID_WiFiScan,
+    kEventID_WiFiReset,
+    kEventID_WiFiGetIP,
+    kEventID_WiFiConnected,
+
+    kEventID_FTPSetServerInfo,
+    kEventID_FTPGetServerInfo,
+    kEventID_FTPSetServerIP,
+    kEventID_FTPGetServerIP,
+    kEventID_FTPSetServerPort,
+    kEventID_FTPGetServerPort,
+    kEventID_FTPSetServerAuth,
+    kEventID_FTPGetServerAuth,
 
     kEventID_SetLogLevel,
     kEventID_GetLogLevel,
@@ -47,6 +72,9 @@ typedef enum _event_id
     kEventID_ControlIRCamExposure,
     kEventID_ControlRGBCamExposure,
 
+    kEventID_RecordingState,
+    kEventID_RecordingInfo,
+
     kEventID_LastCommon
 } event_id_t;
 
@@ -54,6 +82,7 @@ typedef enum _event_status
 {
     kEventStatus_Ok,
     kEventStatus_Error,
+    kEventStatus_NonBlocking,
     kEventStatus_WrongParam,
 } event_status_t;
 
@@ -80,8 +109,14 @@ typedef struct _white_led_event
 
 typedef struct _brightness_control_event
 {
-    bool enable;       /* enable (false-true) */
+    uint8_t enable;    /* enable (false-true) */
     uint8_t direction; /* direction (0-1) */
+    uint8_t type;      /* faceAE(0) or globleAE(1) */
+    union
+    {
+        uint16_t faceRect[4]; /* left, top, right, bottom */
+        uint8_t globalAE;
+    };
 } brightness_control_event_t;
 
 typedef struct _display_output_event
@@ -109,18 +144,61 @@ typedef struct _lpm_event
     };
 } lpm_event_t;
 
+typedef struct _connectivity_event
+{
+    uint8_t connectivityType;
+} connectivity_event_t;
+
+typedef struct _wifi_event_t
+{
+    union
+    {
+        char *ip;
+        char *ftpServerInfoSerialized;
+        uint8_t isConnected;
+        wifi_state_t state;
+        wifi_cred_t wifiCred;
+        ftp_server_info_t ftpServerInfo;
+    };
+
+} wifi_event_t;
+
+typedef enum _recording_state_t
+{
+    kRecordingState_Start = 0,
+    kRecordingState_Stop,
+    kRecordingState_Info,
+    kRecordingState_Invalid
+} recording_state_t;
+
+typedef struct _recording_info_t
+{
+    recording_state_t state;
+    unsigned int start;
+    unsigned int size;
+} recording_info_t;
+
+typedef struct _event_recording_t
+{
+    event_base_t eventBase;
+    recording_state_t state;
+} event_recording_t;
+
 typedef struct _event_common
 {
     event_base_t eventBase;
     union
     {
         void *data;
+
+        wifi_event_t wifi;
         log_level_event_t logLevel;
         display_output_event_t displayOutput;
         speaker_volume_event_t speakerVolume;
         ir_led_event_t irLed;
         white_led_event_t whiteLed;
         lpm_event_t lpm;
+        connectivity_event_t connectivity;
         brightness_control_event_t brightnessControl;
     };
 } event_common_t;

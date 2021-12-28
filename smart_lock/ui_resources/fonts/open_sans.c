@@ -6,8 +6,8 @@
  * FileName: open_sans.cpp
  *****************************************************************************/
 
-#include <fonts/open_sans.h>
 #include <stddef.h>
+#include <ui_resources/fonts/open_sans.h>
 
 const unsigned char d4dfnt_OpenSans8_data_table[] = {
 

@@ -30,6 +30,9 @@ extern "C" {
 hal_config_status_t FWK_ConfigInit();
 hal_config_status_t FWK_ConfigDeinit();
 
+hal_config_status_t FWK_ConfigSetConnectivityType(connectivity_type_t conType);
+connectivity_type_t FWK_ConfigGetConnectivityType();
+
 hal_config_status_t FWK_ConfigSetLogLevel(log_level_t logLevel);
 log_level_t FWK_ConfigGetLogLevel();
 

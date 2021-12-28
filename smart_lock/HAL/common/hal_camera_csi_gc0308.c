@@ -39,7 +39,7 @@
 
 #define CAMERA_RGB_CONTROL_FLAGS (kCAMERA_HrefActiveHigh | kCAMERA_DataLatchOnRisingEdge)
 
-AT_NONCACHEABLE_SECTION_ALIGN(
+SDK_ALIGN(
     static uint8_t s_FrameBuffers[CAMERA_DEV_BUFFER_COUNT][CAMERA_HEIGHT][CAMERA_WIDTH * CAMERA_BYTES_PER_PIXEL], 32);
 
 static uint8_t *s_pCurrentFrameBuffer = NULL;

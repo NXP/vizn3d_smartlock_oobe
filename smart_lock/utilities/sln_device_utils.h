@@ -11,7 +11,19 @@
 #define _SLN_DEVICE_UTILS_H_
 
 #include "stdbool.h"
+#include "stdint.h"
 #include "ctype.h"
+
+/**
+ * @brief
+ *
+ * @param destination
+ * @param destination_size
+ * @param source
+ * @param parameterCount
+ * @return
+ */
+uint32_t mergeParameters(char *destination, uint32_t destination_size, char **source, uint32_t parameterCount);
 
 /**
  * @brief checks a string for any characters that do not match any of the [a-Z], [0-9], '-', or '_' characters as these

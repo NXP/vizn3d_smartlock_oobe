@@ -227,11 +227,11 @@ settings:
 
 #ifndef SKIP_POWER_ADJUSTMENT
 #if __CORTEX_M == 7
-#define BYPASS_LDO_LPSR     1
+#define BYPASS_LDO_LPSR 1
 #define SKIP_LDO_ADJUSTMENT 1
 #elif __CORTEX_M == 4
 #define SKIP_DCDC_ADJUSTMENT 1
-#define SKIP_FBB_ENABLE      1
+#define SKIP_FBB_ENABLE 1
 #endif
 #endif
 
@@ -338,6 +338,11 @@ void BOARD_BootClockRUN(void)
     CLOCK_SetRootClock(kCLOCK_Root_Bus_Lpsr, &rootCfg);
 #endif
 
+    /* Move the SEMC clock to stable OSC while the PLL are enabled */
+    rootCfg.mux = kCLOCK_SEMC_ClockRoot_MuxOscRc400M;
+    rootCfg.div = 2;
+    CLOCK_SetRootClock(kCLOCK_Root_Semc, &rootCfg);
+
     /* Init Arm Pll. */
     CLOCK_InitArmPll(&armPllConfig_BOARD_BootClockRUN);
 
@@ -416,11 +421,9 @@ void BOARD_BootClockRUN(void)
 #endif
 
     /* Configure SEMC using SYS_PLL2_PFD1_CLK */
-#ifndef SKIP_SEMC_INIT
     rootCfg.mux = kCLOCK_SEMC_ClockRoot_MuxSysPll2Pfd1;
     rootCfg.div = 3;
     CLOCK_SetRootClock(kCLOCK_Root_Semc, &rootCfg);
-#endif
 
     /* Configure CSSYS using OSC_RC_48M_DIV2 */
     rootCfg.mux = kCLOCK_CSSYS_ClockRoot_MuxOscRc48MDiv2;

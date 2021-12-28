@@ -21,13 +21,19 @@
 #include "hal_flash_dev.h"
 #include "stdio.h"
 
-#define FEATURE_VERSION 0x0001
+#if defined(AUTOSAVE) & (AUTOSAVE == 1)
+#warning "A screen flicker might be observed when registering faces if autosave is enabled."
+#endif
+
+#define FACE_ENTRY(id) (s_FaceDB + (id * s_FaceEntrySize))
+
+#define FEATURE_VERSION 0x0002
 /* TODO this needs to be defined at runtime */
 #define MODEL_VERSION 0x0001
 
 #define FACEDB_SLOT_EMPTY 0x0
 
-#define RESERVED_DATA 0x8
+#define RESERVED_DATA 0x6
 
 #define OASIS_DIR "oasis"
 
@@ -59,6 +65,7 @@ typedef struct _facedb_metadata
     uint32_t featureVersion;
     uint32_t modelVersion;
     uint8_t numberFaces;
+    uint16_t faceEntrySize;
     /* RESERVED DATA for future updates */
     uint8_t reservedData[RESERVED_DATA];
     uint8_t faceMapping[MAX_FACE_DB_SIZE];
@@ -67,16 +74,17 @@ typedef struct _facedb_metadata
 typedef struct _facedb_entry
 {
     char name[FACE_NAME_MAX_LEN + 1];
-    unsigned char face[MAX_OASIS_FACE_SIZE];
+    /* Just mark the beginning. Face Feature size is dynamic */
+    unsigned char face[];
 } facedb_entry_t;
 
-// memory face database
-static facedb_entry_t s_FaceDB[MAX_FACE_DB_SIZE];
+/* Database buffer */
+static uint16_t s_FaceEntrySize;
+static uint32_t s_FaceDBSize;
+static uint8_t *s_FaceDB              = NULL;
+static SemaphoreHandle_t s_FaceDBLock = NULL;
 
 static facedb_metadata_t s_OasisMetadata;
-
-// face database lock
-static SemaphoreHandle_t s_FaceDBLock = NULL;
 
 /*******************************************************************************
  * Prototypes
@@ -107,7 +115,7 @@ static int _Facedb_Lock()
     return kFaceDBStatus_Success;
 }
 
-// internal function to relase the database lock
+/* internal function to release the database lock */
 static void _Facedb_Unlock()
 {
     if (s_FaceDBLock != NULL)
@@ -121,15 +129,13 @@ static void _Facedb_SetMetaDataDefault()
     s_OasisMetadata.featureVersion = FEATURE_VERSION;
     s_OasisMetadata.modelVersion   = MODEL_VERSION;
     s_OasisMetadata.numberFaces    = 0;
+    s_OasisMetadata.faceEntrySize  = 0;
     memset(s_OasisMetadata.faceMapping, FACEDB_SLOT_EMPTY, MAX_FACE_DB_SIZE * sizeof(uint8_t));
 }
 
 static void _facedb_face_setdefault()
 {
-    for (uint16_t id = 0; id < MAX_FACE_DB_SIZE; id++)
-    {
-        memset(&s_FaceDB[id], 0, sizeof(facedb_entry_t));
-    }
+    memset(s_FaceDB, 0, s_FaceDBSize);
 }
 
 static void _Facedb_GeneratePathFromIndex(uint16_t id, char *path)
@@ -150,6 +156,7 @@ static sln_flash_status_t _Facedb_UpdateMetadata()
     oasisMetadata.featureVersion = s_OasisMetadata.featureVersion;
     oasisMetadata.modelVersion   = s_OasisMetadata.modelVersion;
     oasisMetadata.numberFaces    = s_OasisMetadata.numberFaces;
+    oasisMetadata.faceEntrySize  = s_OasisMetadata.faceEntrySize;
     for (uint16_t id = 0; id < MAX_FACE_DB_SIZE; id++)
     {
         /* Clear the used flag */
@@ -183,7 +190,7 @@ static sln_flash_status_t _Facedb_Load()
         {
             char path[20];
             _Facedb_GeneratePathFromIndex(id, path);
-            status = FWK_Flash_Read(path, &s_FaceDB[id], sizeof(facedb_entry_t));
+            status = FWK_Flash_Read(path, (FACE_ENTRY(id)), s_OasisMetadata.faceEntrySize);
             if (status != kStatus_HAL_FlashSuccess)
             {
                 LOGE("Facedb: Failed to load face database at path \"%s\".", path);
@@ -210,7 +217,7 @@ static sln_flash_status_t _Facedb_Load()
             char path[20];
             LOGD("Facedb: Update operation not saved on last run for id %d, load older version", id);
             _Facedb_GeneratePathFromIndex(id, path);
-            status         = FWK_Flash_Read(path, &s_FaceDB[id], sizeof(facedb_entry_t));
+            status         = FWK_Flash_Read(path, (FACE_ENTRY(id)), s_OasisMetadata.faceEntrySize);
             updateMetadata = true;
             if (status != kStatus_HAL_FlashSuccess)
             {
@@ -254,40 +261,47 @@ static facedb_status_t _Facedb_Init()
     if (status == kStatus_HAL_FlashDirExist)
     {
         /* Already exists assume everything is ok don't over engineer for now */
-
         status = FWK_Flash_Read(METADATA_FILE_NAME, &s_OasisMetadata, sizeof(facedb_metadata_t));
         if (status == kStatus_HAL_FlashSuccess)
         {
             if ((s_OasisMetadata.featureVersion != FEATURE_VERSION) || (s_OasisMetadata.modelVersion != MODEL_VERSION))
             {
                 LOGE(
-                    "Facedb Oasis_Version found in flash different from current version. Features might be "
+                    "Facedb: Oasis_Version found in flash different from current version. Features might be "
                     "different.");
-                /* Different version erase */
-                s_OasisMetadata.featureVersion = FEATURE_VERSION;
-                s_OasisMetadata.modelVersion   = MODEL_VERSION;
+                /* TODO: Implement a recovery strategy */
+                _Facedb_DeleteAllFaces();
+                _Facedb_SetMetaDataDefault();
                 FWK_Flash_Save(METADATA_FILE_NAME, &s_OasisMetadata, sizeof(facedb_metadata_t));
-                /* TODO */
-                ret = kFaceDBStatus_VersionMismatch;
+
+                ret = kFaceDBStatus_Success;
             }
             else
             {
                 /* Same version */
                 LOGI("Facedb: Same version. Number of faces %d.", s_OasisMetadata.numberFaces);
-                status = _Facedb_Load();
-                if (status == kStatus_HAL_FlashSuccess)
+                if (s_OasisMetadata.faceEntrySize > s_FaceEntrySize)
                 {
-                    ret = kFaceDBStatus_AlreadyInit;
+                    LOGE("Facedb: Existing faces are much bigger than the current allocated memory. Failed to load.");
+                    ret = kFaceDBStatus_NotEnoughMemory;
                 }
                 else
                 {
-                    ret = kFaceDBStatus_Failed;
+                    status = _Facedb_Load();
+                    if (status == kStatus_HAL_FlashSuccess)
+                    {
+                        ret = kFaceDBStatus_Success;
+                    }
+                    else
+                    {
+                        ret = kFaceDBStatus_Failed;
+                    }
                 }
             }
         }
         else
         {
-            LOGE("Facedb: Failed to open the config file.");
+            LOGE("Facedb: Failed to open the configuration file.");
             ret = kFaceDBStatus_Failed;
         }
     }
@@ -301,10 +315,11 @@ static facedb_status_t _Facedb_Init()
     }
     else
     {
-        LOGE("Facedb: Failed to init the config file.");
+        LOGE("Facedb: Failed to initialize the metadata file.");
         ret = kFaceDBStatus_Failed;
     }
 
+    s_OasisMetadata.faceEntrySize = s_FaceEntrySize;
     return ret;
 }
 
@@ -316,7 +331,7 @@ static sln_flash_status_t _Facedb_SaveFace(uint16_t id)
     char path[20];
     _Facedb_GeneratePathFromIndex(id, path);
 
-    status = FWK_Flash_Save(path, &s_FaceDB[id], sizeof(facedb_entry_t));
+    status = FWK_Flash_Save(path, (FACE_ENTRY(id)), s_FaceEntrySize);
     if (status == kStatus_HAL_FlashSuccess)
     {
         /* Update metadata */
@@ -357,8 +372,8 @@ static sln_flash_status_t _Facedb_DeleteAllFaces()
         /* Try to delete gracefully */
         if ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Used)) == FACE_IN_USE)
         {
-            /* Del from RAM */
-            memset(&s_FaceDB[id], 0, sizeof(facedb_entry_t));
+            /* Delete from RAM */
+            memset((FACE_ENTRY(id)), 0, s_FaceEntrySize);
             s_OasisMetadata.faceMapping[id] &= ~(1 << kFaceMappingBitWise_Used);
             s_OasisMetadata.numberFaces--;
 
@@ -379,6 +394,7 @@ static sln_flash_status_t _Facedb_DeleteAllFaces()
     if ((s_OasisMetadata.numberFaces != 0) || (status != kStatus_HAL_FlashSuccess))
     {
         /* Something went wrong delete all from RAM and clean metadata */
+        LOGE("Facedb: Something went wrong delete all from RAM and clean metadata")
         _facedb_face_setdefault();
         _Facedb_SetMetaDataDefault();
         updateMetadata = true;
@@ -402,9 +418,9 @@ static sln_flash_status_t _Facedb_DeleteFace(uint16_t id)
 
     if ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Used)) == FACE_IN_USE)
     {
-        /* Del from RAM */
+        /* Delete from RAM */
         LOGD("Facedb: delete file from ram id %d", id);
-        memset(&s_FaceDB[id], 0, sizeof(facedb_entry_t));
+        memset((FACE_ENTRY(id)), 0, s_FaceEntrySize);
         s_OasisMetadata.faceMapping[id] &= ~(1 << kFaceMappingBitWise_Used);
         s_OasisMetadata.numberFaces--;
 
@@ -434,7 +450,8 @@ static facedb_status_t _Facedb_GetIdFromName(char *name, uint16_t *pId)
     *pId = INVALID_ID;
     for (uint16_t id = 0; id < MAX_FACE_DB_SIZE; id++)
     {
-        if (strcmp(name, s_FaceDB[id].name) == 0)
+        facedb_entry_t *faceEntry = (facedb_entry_t *)(FACE_ENTRY(id));
+        if (strcmp(name, faceEntry->name) == 0)
         {
             *pId = id;
             return kFaceDBStatus_Success;
@@ -445,18 +462,40 @@ static facedb_status_t _Facedb_GetIdFromName(char *name, uint16_t *pId)
 }
 
 /* face database init */
-facedb_status_t HAL_Facedb_Init(void)
+facedb_status_t HAL_Facedb_Init(uint16_t featureSize)
 {
     facedb_status_t status = kFaceDBStatus_Success;
 
-    if (NULL == s_FaceDBLock)
+    if (NULL == s_FaceDB)
+    {
+        if (featureSize == 0)
+        {
+            status = kFaceDBStatus_NotEnoughMemory;
+        }
+        else
+        {
+            s_FaceDBSize = (featureSize + FACE_NAME_MAX_LEN) * MAX_FACE_DB_SIZE;
+            s_FaceDB     = pvPortMalloc(s_FaceDBSize);
+
+            if (NULL == s_FaceDB)
+            {
+                LOGE("Facedb: Failed to allocate face DB buffer");
+                status = kFaceDBStatus_NotEnoughMemory;
+            }
+            s_FaceEntrySize = featureSize + sizeof(((facedb_entry_t *)0)->name);
+        }
+    }
+
+    if ((status == kFaceDBStatus_Success) && (NULL == s_FaceDBLock))
     {
         s_FaceDBLock = xSemaphoreCreateMutex();
 
         if (NULL == s_FaceDBLock)
         {
             LOGE("Facedb: Failed to create DB lock semaphore");
-            status = kFaceDBStatus_Failed;
+            vPortFree(s_FaceDB);
+            s_FaceDB = NULL;
+            status   = kFaceDBStatus_NotEnoughMemory;
         }
     }
 
@@ -479,6 +518,21 @@ facedb_status_t HAL_Facedb_SaveFace()
     sln_flash_status_t status = kStatus_HAL_FlashSuccess;
     facedb_status_t ret       = kFaceDBStatus_Success;
     uint8_t updateMetadata    = false;
+
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else
+    {
+        ret = _Facedb_Lock();
+    }
+
+    if (ret != kFaceDBStatus_Success)
+    {
+        return ret;
+    }
+
     for (uint16_t id = 0; id < MAX_FACE_DB_SIZE; id++)
     {
         /* Try to save */
@@ -520,12 +574,15 @@ facedb_status_t HAL_Facedb_AddFace(uint16_t id, char *name, void *face, int size
 {
     facedb_status_t ret = kFaceDBStatus_Success;
 
-    if (size >= MAX_OASIS_FACE_SIZE || id >= MAX_FACE_DB_SIZE || face == NULL)
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else if ((size >= s_FaceEntrySize) || (id >= MAX_FACE_DB_SIZE) || (face == NULL))
     {
         ret = kFaceDBStatus_WrongParam;
     }
-
-    if (ret == kFaceDBStatus_Success)
+    else
     {
         ret = _Facedb_Lock();
     }
@@ -535,17 +592,18 @@ facedb_status_t HAL_Facedb_AddFace(uint16_t id, char *name, void *face, int size
         if ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Used)) == FACE_NOT_USED)
         {
             /* Update RAM face */
+            facedb_entry_t *faceEntry = (facedb_entry_t *)(FACE_ENTRY(id));
             if (name != NULL)
             {
-                strcpy(s_FaceDB[id].name, name);
+                strcpy(faceEntry->name, name);
             }
             else
             {
-                sprintf(s_FaceDB[id].name, "user_%03d", id);
-                s_FaceDB[id].name[FACE_NAME_MAX_LEN - 1] = 0;
+                sprintf(faceEntry->name, "user_%03d", id);
+                faceEntry->name[FACE_NAME_MAX_LEN - 1] = 0;
             }
 
-            memcpy(s_FaceDB[id].face, face, size);
+            memcpy(faceEntry->face, face, size);
 
             s_OasisMetadata.faceMapping[id] = FACE_IN_USE;
             s_OasisMetadata.numberFaces++;
@@ -585,12 +643,16 @@ facedb_status_t HAL_Facedb_DelFaceWithName(char *name)
 {
     sln_flash_status_t status = kStatus_HAL_FlashSuccess;
     facedb_status_t ret       = kFaceDBStatus_Success;
-    if (name == NULL)
+
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else if (name == NULL)
     {
         ret = kFaceDBStatus_WrongParam;
     }
-
-    if (ret == kFaceDBStatus_Success)
+    else
     {
         ret = _Facedb_Lock();
     }
@@ -619,11 +681,20 @@ facedb_status_t HAL_Facedb_DelFaceWithName(char *name)
     return ret;
 }
 
-/*  del a face item in the database */
+/*  Delete a face item in the database */
 facedb_status_t HAL_Facedb_DelFaceWithID(uint16_t id)
 {
     sln_flash_status_t status = kStatus_HAL_FlashSuccess;
-    facedb_status_t ret       = _Facedb_Lock();
+    facedb_status_t ret       = kFaceDBStatus_Success;
+
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else
+    {
+        ret = _Facedb_Lock();
+    }
 
     if (ret == kFaceDBStatus_Success)
     {
@@ -676,12 +747,15 @@ facedb_status_t HAL_Facedb_GetAllFaceIds(uint16_t *face_ids, void **pFace)
     facedb_status_t ret = kFaceDBStatus_Success;
     uint16_t index      = 0;
 
-    if (face_ids == NULL || pFace == NULL)
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else if ((face_ids == NULL) || (pFace == NULL))
     {
         ret = kFaceDBStatus_WrongParam;
     }
-
-    if (ret == kFaceDBStatus_Success)
+    else
     {
         ret = _Facedb_Lock();
     }
@@ -690,10 +764,11 @@ facedb_status_t HAL_Facedb_GetAllFaceIds(uint16_t *face_ids, void **pFace)
     {
         for (uint16_t id = 0; id < MAX_FACE_DB_SIZE; id++)
         {
+            facedb_entry_t *faceEntry = (facedb_entry_t *)(FACE_ENTRY(id));
             if ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Used)) == FACE_IN_USE)
             {
                 face_ids[index]  = id;
-                *(pFace + index) = s_FaceDB[id].face;
+                *(pFace + index) = &faceEntry->face;
                 index++;
             }
         }
@@ -708,12 +783,15 @@ facedb_status_t HAL_Facedb_GetFace(uint16_t id, void **pFace)
 {
     facedb_status_t ret = kFaceDBStatus_Success;
 
-    if (pFace == NULL)
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else if (pFace == NULL)
     {
         ret = kFaceDBStatus_WrongParam;
     }
-
-    if (ret == kFaceDBStatus_Success)
+    else
     {
         ret = _Facedb_Lock();
     }
@@ -727,7 +805,8 @@ facedb_status_t HAL_Facedb_GetFace(uint16_t id, void **pFace)
         }
         else if ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Used)) == FACE_IN_USE)
         {
-            *pFace = s_FaceDB[id].face;
+            facedb_entry_t *faceEntry = (facedb_entry_t *)(FACE_ENTRY(id));
+            *pFace                    = &(faceEntry->face);
         }
         else
         {
@@ -778,16 +857,29 @@ bool HAL_Facedb_GetSaveStatus(uint16_t id)
 /* get the name of the face item with the specified face id from the database */
 char *HAL_Facedb_GetName(uint16_t id)
 {
-    facedb_status_t ret = _Facedb_Lock();
     char *face_name     = NULL;
+    facedb_status_t ret = kFaceDBStatus_Success;
+
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else if (id >= MAX_FACE_DB_SIZE)
+    {
+        ret = kFaceDBStatus_WrongParam;
+    }
+    else
+    {
+        ret = _Facedb_Lock();
+    }
 
     if (ret == kFaceDBStatus_Success)
     {
         // lock success
-        if ((id < MAX_FACE_DB_SIZE) &&
-            ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Used)) == FACE_IN_USE))
+        if ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Used)) == FACE_IN_USE)
         {
-            face_name = s_FaceDB[id].name;
+            facedb_entry_t *faceEntry = (facedb_entry_t *)(FACE_ENTRY(id));
+            face_name                 = faceEntry->name;
         }
         else
         {
@@ -803,15 +895,28 @@ char *HAL_Facedb_GetName(uint16_t id)
 /* update the name of the face item with the specified face id from the database */
 facedb_status_t HAL_Facedb_UpdateName(uint16_t id, char *name)
 {
-    facedb_status_t ret = _Facedb_Lock();
+    facedb_status_t ret = kFaceDBStatus_Success;
+
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else if ((id >= MAX_FACE_DB_SIZE) && (name == NULL))
+    {
+        ret = kFaceDBStatus_WrongParam;
+    }
+    else
+    {
+        ret = _Facedb_Lock();
+    }
 
     if (ret == kFaceDBStatus_Success)
     {
-        // lock success
-        if ((id < MAX_FACE_DB_SIZE) &&
-            ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Used)) == FACE_IN_USE))
+        /* lock success */
+        if ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Used)) == FACE_IN_USE)
         {
-            memcpy(s_FaceDB[id].name, name, sizeof(s_FaceDB[id].name));
+            facedb_entry_t *faceEntry = (facedb_entry_t *)(FACE_ENTRY(id));
+            memcpy(faceEntry->name, name, sizeof(faceEntry->name));
 #if AUTOSAVE
             sln_flash_status_t status = kStatus_HAL_FlashSuccess;
 
@@ -819,7 +924,7 @@ facedb_status_t HAL_Facedb_UpdateName(uint16_t id, char *name)
             status = _Facedb_SaveFace(id);
             if (status == kStatus_HAL_FlashSuccess)
             {
-                LOGD("[DEBUG] Facedb: Added Flash success :%d %s \r\n", id, name);
+                LOGD("Facedb: Added Flash success :%d %s \r\n", id, name);
             }
 #else
             if ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Saved)) == FACE_SAVED)
@@ -831,7 +936,7 @@ facedb_status_t HAL_Facedb_UpdateName(uint16_t id, char *name)
         }
         else
         {
-            LOGE("Facedb: No face associated with the specified ID \"%d\"", id);
+            LOGE("Facedb: Facedb: associated with the specified ID \"%d\"", id);
         }
 
         _Facedb_Unlock();
@@ -845,12 +950,15 @@ facedb_status_t HAL_Facedb_UpdateFace(uint16_t id, char *name, void *face, int s
 {
     facedb_status_t ret = kFaceDBStatus_Success;
 
-    if (size >= MAX_OASIS_FACE_SIZE || id >= MAX_FACE_DB_SIZE || face == NULL || name == NULL)
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else if ((size >= s_FaceEntrySize) || (id >= MAX_FACE_DB_SIZE) || (face == NULL) || (name == NULL))
     {
         ret = kFaceDBStatus_WrongParam;
     }
-
-    if (ret == kFaceDBStatus_Success)
+    else
     {
         ret = _Facedb_Lock();
     }
@@ -860,8 +968,9 @@ facedb_status_t HAL_Facedb_UpdateFace(uint16_t id, char *name, void *face, int s
         if ((s_OasisMetadata.faceMapping[id] & (1 << kFaceMappingBitWise_Used)) == FACE_IN_USE)
         {
             /* Update RAM face */
-            strcpy(s_FaceDB[id].name, name);
-            memcpy(s_FaceDB[id].face, face, size);
+            facedb_entry_t *faceEntry = (facedb_entry_t *)(FACE_ENTRY(id));
+            strcpy(faceEntry->name, name);
+            memcpy(&(faceEntry->face), face, size);
 
             LOGD("Facedb: Successfully saved face to RAM:%d %s \r\n", id, name);
 #if AUTOSAVE
@@ -895,12 +1004,15 @@ facedb_status_t HAL_Facedb_GetIds(uint16_t *face_ids)
     facedb_status_t ret = kFaceDBStatus_Success;
     uint8_t index       = 0;
 
-    if (face_ids == NULL)
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else if (face_ids == NULL)
     {
         ret = kFaceDBStatus_WrongParam;
     }
-
-    if (ret == kFaceDBStatus_Success)
+    else
     {
         ret = _Facedb_Lock();
     }
@@ -920,17 +1032,20 @@ facedb_status_t HAL_Facedb_GetIds(uint16_t *face_ids)
     return ret;
 }
 
-/* gen the unique face id for the new face */
+/* Generate the unique face id for the new face */
 facedb_status_t HAL_Facedb_GenId(uint16_t *new_id)
 {
     facedb_status_t ret = kFaceDBStatus_Success;
 
-    if (new_id == NULL)
+    if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
+    {
+        ret = kFaceDBStatus_NotInit;
+    }
+    else if (new_id == NULL)
     {
         ret = kFaceDBStatus_WrongParam;
     }
-
-    if (ret == kFaceDBStatus_Success)
+    else
     {
         ret = _Facedb_Lock();
     }

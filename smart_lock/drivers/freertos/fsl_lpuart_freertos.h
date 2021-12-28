@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015, Freescale Semiconductor, Inc.
- * Copyright 2016-2021 NXP
+ * Copyright 2016-2020 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -60,12 +60,11 @@ typedef struct _lpuart_rtos_config
 #define RTOS_LPUART_RING_BUFFER_OVERRUN 0x4U
 /*! @brief Event flag - hardware buffer overrun. */
 #define RTOS_LPUART_HARDWARE_BUFFER_OVERRUN 0x8U
-#define RTOS_LPUART_RX_TIMEOUT              0x10U
-#define RTOS_LPUART_TX_TIMEOUT              0x20U
+#define RTOS_LPUART_RX_TIMEOUT 0x10U
+#define RTOS_LPUART_TX_TIMEOUT 0x20U
 /*@}*/
 
-typedef enum
-{
+typedef enum {
     RX_TIMEOUT = 0,
     TX_TIMEOUT,
 } TimerID;
@@ -84,7 +83,7 @@ typedef struct _lpuart_rtos_handle
     TimerHandle_t txTimer;
     uint32_t rxTimerId;
     uint32_t txTimerId;
-    void *t_state; /*!< Transactional state of the underlying driver */
+    void *t_state;                 /*!< Transactional state of the underlying driver */
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
     StaticSemaphore_t txSemaphoreBuffer; /*!< Statically allocated memory for txSemaphore */
     StaticSemaphore_t rxSemaphoreBuffer; /*!< Statically allocated memory for rxSemaphore */
@@ -145,18 +144,6 @@ int LPUART_RTOS_Deinit(lpuart_rtos_handle_t *handle);
  * @param length The number of bytes to send.
  */
 int LPUART_RTOS_Send(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length);
-
-/*!
- * @brief Sends data in the background.
- *
- * This function sends data. It is an synchronous API.
- * If the hardware buffer is full, the task is in the blocked state.
- *
- * @param handle The RTOS LPUART handle.
- * @param buffer The pointer to buffer to send.
- * @param length The number of bytes to send.
- * @param timeout_ms Number of ms to wait to send.
- */
 int LPUART_RTOS_SendTimeout(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length, uint32_t timeout_ms);
 
 /*!
@@ -171,21 +158,7 @@ int LPUART_RTOS_SendTimeout(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint3
  * @param received The pointer to a variable of size_t where the number of received data is filled.
  */
 int LPUART_RTOS_Receive(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length, size_t *received);
-
-/**
- * @brief Receives data
- *
- *  * This function receives data from LPUART. It is an synchronous API with timeout
- *
- * @param handle The RTOS LPUART handle
- * @param buffer The pointer to buffer where to write received data.
- * @param length The number of bytes to receive.
- * @param received The pointer to a variable of size_t where the number of received data is filled.
- * @param timeout_ms Number of ms to wait
- * @return int
- */
-int LPUART_RTOS_ReceiveTimeout(
-    lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length, size_t *received, uint32_t timeout_ms);
+int LPUART_RTOS_ReceiveTimeout(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length, size_t *received, uint32_t timeout_ms);
 
 /* @} */
 

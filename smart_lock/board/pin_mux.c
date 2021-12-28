@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 NXP
+ * Copyright 2019 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -83,7 +83,6 @@ void BOARD_InitBootPins(void) {
     BOARD_InitLedPins();
     BOARD_InitRGBLedPins();
     BOARD_InitWiFiPins();
-    BOARD_InitMicPins();
     BOARD_InitMQSPins();
     BOARD_InitDebugConsolePins();
 }
@@ -101,7 +100,7 @@ BOARD_InitMipiPanelPins:
 
 /* FUNCTION ************************************************************************************************************
  *
- * Function Name : BOARD_InitMipiPanelPins, assigned for the Cortex-M7F core.
+ * Function Name : BOARD_InitMipiPanelPins
  * Description   : Configures pin routing and optionally pin electrical features.
  *
  * END ****************************************************************************************************************/
@@ -167,6 +166,7 @@ BOARD_InitMipiCameraPins:
   - {pin_num: P1, peripheral: GPIO2, signal: 'gpio_mux_io, 18', pin_signal: GPIO_EMC_B2_08, identifier: CAMERA_RST, direction: OUTPUT, gpio_init_state: no_init}
   - {pin_num: P8, peripheral: LPI2C6, signal: SDA, pin_signal: GPIO_LPSR_06, software_input_on: Enable}
   - {pin_num: R8, peripheral: LPI2C6, signal: SCL, pin_signal: GPIO_LPSR_07, software_input_on: Enable}
+  - {pin_num: P8, peripheral: LPI2C6, signal: SDA, pin_signal: GPIO_LPSR_06, software_input_on: Enable}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 
@@ -342,7 +342,7 @@ BOARD_InitRGBLedPins:
 
 /* FUNCTION ************************************************************************************************************
  *
- * Function Name : BOARD_InitRGBLedPins, assigned for the Cortex-M7F core.
+ * Function Name : BOARD_InitRGBLedPins
  * Description   : Configures pin routing and optionally pin electrical features.
  *
  * END ****************************************************************************************************************/
@@ -362,6 +362,16 @@ void BOARD_InitRGBLedPins(void) {
     (~(IOMUXC_GPR_GPR40_GPIO_MUX2_GPIO_SEL_LOW_MASK))) /* Mask bits to zero which are setting */
       | IOMUXC_GPR_GPR40_GPIO_MUX2_GPIO_SEL_LOW(0x00U) /* GPIO2 and CM7_GPIO2 share same IO MUX function, GPIO_MUX2 selects one GPIO function: 0x00U */
     );
+
+  gpio_pin_config_t rgb_led_config = {
+      .direction = kGPIO_DigitalOutput,
+      .outputLogic = 0U,
+      .interruptMode = kGPIO_NoIntmode
+  };
+
+  GPIO_PinInit(GPIO2, 10, &rgb_led_config);
+  GPIO_PinInit(GPIO2, 11, &rgb_led_config);
+  GPIO_PinInit(GPIO2, 12, &rgb_led_config);
 }
 
 
@@ -905,7 +915,7 @@ void BOARD_InitWiFiPins(void) {
   CLOCK_EnableClock(kCLOCK_Iomuxc);           /* LPCG on: LPCG is ON. */
 
   IOMUXC_SetPinMux(
-      IOMUXC_GPIO_AD_34_USDHC1_VSELECT,       /* GPIO_AD_34 is configured as USDHC1_VSELECT */
+      IOMUXC_GPIO_AD_34_GPIO10_IO01,       /* GPIO_AD_34 is configured as USDHC1_VSELECT */
       0U);                                    /* Software Input On Field: Input Path is determined by functionality */
   IOMUXC_SetPinMux(
       IOMUXC_GPIO_AD_35_GPIO10_IO02,          /* GPIO_AD_35 is configured as GPIO10_IO02 */
@@ -1432,8 +1442,8 @@ void BOARD_InitMicPins(void) {
       0U);                                    /* Software Input On Field: Input Path is determined by functionality */
   IOMUXC_SetPinConfig(
       IOMUXC_GPIO_LPSR_08_MIC_CLK,            /* GPIO_LPSR_08 PAD functional properties : */
-      0x03U);                                 /* Slew Rate Field: Fast Slew Rate
-                                                 Drive Strength Field: high driver
+      0x00U);                                 /* Slew Rate Field: Fast Slew Rate
+                                                 Drive Strength Field: normal driver
                                                  Pull / Keep Select Field: Pull Disable
                                                  Pull Up / Down Config. Field: Weak pull down
                                                  Open Drain LPSR Field: Disabled
@@ -1522,7 +1532,6 @@ void BOARD_InitDebugConsolePins(void) {
       IOMUXC_GPIO_LPSR_01_LPUART12_RXD,       /* GPIO_LPSR_01 is configured as LPUART12_RXD */
       1U);                                    /* Software Input On Field: Force input path of pad GPIO_LPSR_01 */
 }
-
 
 /*
  * TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
