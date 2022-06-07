@@ -19,7 +19,7 @@
 					<folderInfo id="com.crt.advproject.config.exe.debug.1395496206." name="/" resourcePath="">
 						<toolChain id="com.crt.advproject.toolchain.exe.debug.533093958" name="NXP MCU Tools" superClass="com.crt.advproject.toolchain.exe.debug">
 							<targetPlatform binaryParser="org.eclipse.cdt.core.ELF;org.eclipse.cdt.core.GNU_ELF" id="com.crt.advproject.platform.exe.debug.1273386385" name="ARM-based MCU (Debug)" superClass="com.crt.advproject.platform.exe.debug"/>
-							<builder autoBuildTarget="all" buildPath="${workspace_loc:/smart_lock_rt117f}/Debug" cleanBuildTarget="clean" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="com.crt.advproject.builder.exe.debug.1578879284" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.crt.advproject.builder.exe.debug"/>
+							<builder buildPath="${workspace_loc:/smart_lock_rt117f}/Debug" id="com.crt.advproject.builder.exe.debug.1578879284" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="com.crt.advproject.builder.exe.debug"/>
 							<tool id="com.crt.advproject.cpp.exe.debug.1456610024" name="MCU C++ Compiler" superClass="com.crt.advproject.cpp.exe.debug">
 								<option id="com.crt.advproject.cpp.hdrlib.1001121714" name="Library headers" superClass="com.crt.advproject.cpp.hdrlib" useByScannerDiscovery="false"/>
 								<option id="com.crt.advproject.cpp.fpu.1444631136" name="Floating point" superClass="com.crt.advproject.cpp.fpu" useByScannerDiscovery="true" value="com.crt.advproject.cpp.fpu.fpv5sp.hard" valueType="enumerated"/>
@@ -459,7 +459,7 @@
 								<option id="com.crt.advproject.link.cpp.lto.optmization.level.461198074" name="Link-time optimization level" superClass="com.crt.advproject.link.cpp.lto.optmization.level" useByScannerDiscovery="false"/>
 								<option id="com.crt.advproject.link.cpp.fpu.1666301053" name="Floating point" superClass="com.crt.advproject.link.cpp.fpu" useByScannerDiscovery="false" value="com.crt.advproject.link.cpp.fpu.fpv5sp.hard" valueType="enumerated"/>
 								<option id="com.crt.advproject.link.cpp.manage.198687864" name="Manage linker script" superClass="com.crt.advproject.link.cpp.manage" useByScannerDiscovery="false" value="true" valueType="boolean"/>
-								<option id="com.crt.advproject.link.cpp.script.485031006" name="Linker script" superClass="com.crt.advproject.link.cpp.script" useByScannerDiscovery="false" value="&quot;sln_vizn3d_iot_smart_lock_Debug.ld&quot;" valueType="string"/>
+								<option id="com.crt.advproject.link.cpp.script.485031006" name="Linker script" superClass="com.crt.advproject.link.cpp.script" useByScannerDiscovery="false" value="&quot;smart_lock_Debug.ld&quot;" valueType="string"/>
 								<option id="com.crt.advproject.link.cpp.scriptdir.1419160908" name="Script path" superClass="com.crt.advproject.link.cpp.scriptdir" useByScannerDiscovery="false" value="" valueType="string"/>
 								<option id="com.crt.advproject.link.cpp.crpenable.1683775418" name="Enable automatic placement of Code Read Protection field in image" superClass="com.crt.advproject.link.cpp.crpenable" useByScannerDiscovery="false"/>
 								<option id="com.crt.advproject.link.cpp.flashconfigenable.1658126037" name="Enable automatic placement of Flash Configuration field in image" superClass="com.crt.advproject.link.cpp.flashconfigenable" useByScannerDiscovery="false" value="true" valueType="boolean"/>
@@ -1275,7 +1275,7 @@
 								<option id="com.crt.advproject.link.cpp.lto.optmization.level.279456073" name="Link-time optimization level" superClass="com.crt.advproject.link.cpp.lto.optmization.level" useByScannerDiscovery="false"/>
 								<option id="com.crt.advproject.link.cpp.fpu.632183223" name="Floating point" superClass="com.crt.advproject.link.cpp.fpu" useByScannerDiscovery="false" value="com.crt.advproject.link.cpp.fpu.fpv5sp.hard" valueType="enumerated"/>
 								<option id="com.crt.advproject.link.cpp.manage.148903195" name="Manage linker script" superClass="com.crt.advproject.link.cpp.manage" useByScannerDiscovery="false" value="true" valueType="boolean"/>
-								<option id="com.crt.advproject.link.cpp.script.1443675773" name="Linker script" superClass="com.crt.advproject.link.cpp.script" useByScannerDiscovery="false" value="&quot;sln_vizn3d_iot_smart_lock_Release.ld&quot;" valueType="string"/>
+								<option id="com.crt.advproject.link.cpp.script.1443675773" name="Linker script" superClass="com.crt.advproject.link.cpp.script" useByScannerDiscovery="false" value="&quot;smart_lock_Release.ld&quot;" valueType="string"/>
 								<option id="com.crt.advproject.link.cpp.scriptdir.26963996" name="Script path" superClass="com.crt.advproject.link.cpp.scriptdir" useByScannerDiscovery="false" value="" valueType="string"/>
 								<option id="com.crt.advproject.link.cpp.crpenable.868073323" name="Enable automatic placement of Code Read Protection field in image" superClass="com.crt.advproject.link.cpp.crpenable" useByScannerDiscovery="false"/>
 								<option id="com.crt.advproject.link.cpp.flashconfigenable.587324280" name="Enable automatic placement of Flash Configuration field in image" superClass="com.crt.advproject.link.cpp.flashconfigenable" useByScannerDiscovery="false" value="true" valueType="boolean"/>
@@ -1563,6 +1563,24 @@
 							<tool id="com.crt.advproject.tool.debug.release.729697740" name="MCU Debugger" superClass="com.crt.advproject.tool.debug.release.1497352437"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="com.crt.advproject.config.exe.release.951545839.2051074886" name="hal_display_usb_cdc.c" rcbsApplicability="disable" resourcePath="sln_hal/common/hal_display_usb_cdc.c" toolsToInvoke="com.crt.advproject.gcc.exe.release.2074246800.1114521046">
+						<tool id="com.crt.advproject.gcc.exe.release.2074246800.1114521046" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.release.2074246800">
+							<option id="com.crt.advproject.gcc.exe.release.option.optimization.level.378484915" name="Optimization Level" superClass="com.crt.advproject.gcc.exe.release.option.optimization.level" useByScannerDiscovery="true" value="gnu.c.optimization.level.none" valueType="enumerated"/>
+							<inputType id="com.crt.advproject.compiler.input.278243317" superClass="com.crt.advproject.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="com.crt.advproject.config.exe.release.951545839.261181849" name="hal_display_usb_uvc.c" rcbsApplicability="disable" resourcePath="sln_hal/common/hal_display_usb_uvc.c" toolsToInvoke="com.crt.advproject.gcc.exe.release.2074246800.870342680">
+						<tool id="com.crt.advproject.gcc.exe.release.2074246800.870342680" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.release.2074246800">
+							<option id="com.crt.advproject.gcc.exe.release.option.optimization.level.211450192" name="Optimization Level" superClass="com.crt.advproject.gcc.exe.release.option.optimization.level" useByScannerDiscovery="true" value="gnu.c.optimization.level.most" valueType="enumerated"/>
+							<inputType id="com.crt.advproject.compiler.input.1576332196" superClass="com.crt.advproject.compiler.input"/>
+						</tool>
+						<tool customBuildStep="true" id="org.eclipse.cdt.managedbuilder.ui.rcbs.1084262565" name="Resource Custom Build Step">
+							<inputType id="org.eclipse.cdt.managedbuilder.ui.rcbs.inputtype.617623456" name="Resource Custom Build Step Input Type">
+								<additionalInput kind="additionalinputdependency" paths=""/>
+							</inputType>
+							<outputType id="org.eclipse.cdt.managedbuilder.ui.rcbs.outputtype.1573779779" name="Resource Custom Build Step Output Type"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="com.crt.advproject.config.exe.release.951545839.839231520" name="usb_device_descriptor.c" rcbsApplicability="disable" resourcePath="source/usb_device_descriptor.c" toolsToInvoke="com.crt.advproject.gcc.exe.release.2074246800.681067821">
 						<tool id="com.crt.advproject.gcc.exe.release.2074246800.681067821" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.release.2074246800">
 							<option id="com.crt.advproject.gcc.exe.release.option.optimization.level.1846142777" name="Optimization Level" superClass="com.crt.advproject.gcc.exe.release.option.optimization.level" useByScannerDiscovery="true" value="gnu.c.optimization.level.most" valueType="enumerated"/>
@@ -1604,17 +1622,26 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="sln_vizn3d_iot_smart_lock.null.958627277" name="sln_vizn3d_iot_smart_lock" projectType="com.crt.advproject.projecttype.exe"/>
+		<project id="smart_lock_rt117f.null.958627277" name="smart_lock_rt117f" projectType="com.crt.advproject.projecttype.exe"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="com.nxp.mcuxpresso.core.datamodels">
+		<sdkName>SDK_2.x_MIMXRT1170-EVK</sdkName>
+		<sdkVersion>2.10.1</sdkVersion>
+		<sdkComponents>middleware.freertos-kernel.MIMXRT1176;middleware.freertos-kernel.extension.MIMXRT1176;middleware.freertos-kernel.template.MIMXRT1176;platform.drivers.common.MIMXRT1176;platform.drivers.clock.MIMXRT1176;platform.drivers.anatop_ai.MIMXRT1176;platform.drivers.anatop.MIMXRT1176;platform.devices.MIMXRT1176_CMSIS.MIMXRT1176;platform.drivers.lpuart.MIMXRT1176;platform.drivers.igpio.MIMXRT1176;platform.drivers.iomuxc.MIMXRT1176;platform.drivers.xip_device.MIMXRT1176;platform.drivers.pmu_1.MIMXRT1176;platform.drivers.dcdc_soc.MIMXRT1176;utility.debug_console.MIMXRT1176;component.serial_manager.MIMXRT1176;component.lists.MIMXRT1176;component.serial_manager_uart.MIMXRT1176;component.lpuart_adapter.MIMXRT1176;platform.drivers.xip_board.MIMXRT1176;platform.devices.MIMXRT1176_startup.MIMXRT1176;platform.Include_common.MIMXRT1176;platform.Include_core_cm7.MIMXRT1176;platform.Include_dsp.MIMXRT1176;</sdkComponents>
+		<boardId>evkmimxrt1170</boardId>
+		<package>MIMXRT1176DVMAA</package>
+		<core>cm7</core>
+		<coreId>cm7_MIMXRT1176xxxxx</coreId>
+	</storageModule>
 	<storageModule moduleId="com.crt.config">
 		<projectStorage>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&#13;
 &lt;TargetConfig&gt;&#13;
-&lt;Properties property_3="NXP" property_4="MIMXRT117Hxxxxx" property_count="5" version="100300"/&gt;&#13;
+&lt;Properties property_3="NXP" property_4="MIMXRT1176xxxxx" property_count="5" version="100300"/&gt;&#13;
 &lt;infoList vendor="NXP"&gt;&#13;
-&lt;info chip="MIMXRT117Hxxxxx" name="MIMXRT117Hxxxxx"&gt;&#13;
+&lt;info chip="MIMXRT1176xxxxx" name="MIMXRT1176xxxxx"&gt;&#13;
 &lt;chip&gt;&#13;
-&lt;name&gt;MIMXRT117Hxxxxx&lt;/name&gt;&#13;
+&lt;name&gt;MIMXRT1176xxxxx&lt;/name&gt;&#13;
 &lt;family&gt;MIMXRT1170&lt;/family&gt;&#13;
 &lt;vendor&gt;NXP&lt;/vendor&gt;&#13;
 &lt;memory can_program="true" id="Flash" is_ro="true" size="0" type="Flash"/&gt;&#13;
@@ -1630,12 +1657,24 @@
 &lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM_RT_INFO" location="0x81800000" size="0x800000"/&gt;&#13;
 &lt;/chip&gt;&#13;
 &lt;processor&gt;&#13;
+&lt;name gcc_name="cortex-m4"&gt;Cortex-M4&lt;/name&gt;&#13;
+&lt;family&gt;Cortex-M&lt;/family&gt;&#13;
+&lt;/processor&gt;&#13;
+&lt;processor&gt;&#13;
 &lt;name gcc_name="cortex-m7"&gt;Cortex-M7&lt;/name&gt;&#13;
 &lt;family&gt;Cortex-M&lt;/family&gt;&#13;
 &lt;/processor&gt;&#13;
 &lt;/info&gt;&#13;
 &lt;/infoList&gt;&#13;
 &lt;/TargetConfig&gt;</projectStorage>
+	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/smart_lock"/>
+		</configuration>
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/smart_lock"/>
+		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
@@ -1659,22 +1698,5 @@
 		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1395496206;com.crt.advproject.config.exe.debug.1395496206.;com.crt.advproject.gas.exe.debug.281337963;com.crt.advproject.assembler.input.2013444415">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
-	</storageModule>
-	<storageModule moduleId="com.nxp.mcuxpresso.core.datamodels">
-		<sdkName>SDK_2.x_SLN-VIZN3D-IOT</sdkName>
-		<sdkVersion>2.9.1</sdkVersion>
-		<sdkComponents>middleware.freertos-kernel.MIMXRT1176;middleware.freertos-kernel.extension.MIMXRT1176;middleware.freertos-kernel.template.MIMXRT1176;platform.drivers.common.MIMXRT1176;platform.drivers.clock.MIMXRT1176;platform.drivers.anatop_ai.MIMXRT1176;platform.drivers.anatop.MIMXRT1176;platform.devices.MIMXRT1176_CMSIS.MIMXRT1176;platform.drivers.lpuart.MIMXRT1176;platform.drivers.igpio.MIMXRT1176;platform.drivers.iomuxc.MIMXRT1176;platform.drivers.xip_device.MIMXRT1176;platform.drivers.pmu_1.MIMXRT1176;platform.drivers.dcdc_soc.MIMXRT1176;utility.debug_console.MIMXRT1176;component.serial_manager.MIMXRT1176;component.lists.MIMXRT1176;component.serial_manager_uart.MIMXRT1176;component.lpuart_adapter.MIMXRT1176;platform.drivers.xip_board.MIMXRT1176;platform.devices.MIMXRT1176_startup.MIMXRT1176;platform.Include_common.MIMXRT1176;platform.Include_core_cm7.MIMXRT1176;platform.Include_dsp.MIMXRT1176;</sdkComponents>
-		<boardId>sln_vizn3d_iot</boardId>
-		<package>MIMXRT117HDVMAA</package>
-		<core>cm7</core>
-		<coreId>cm7_MIMXRT117Hxxxxx</coreId>
-	</storageModule>
-	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="Debug">
-			<resource resourceType="PROJECT" workspacePath="/sln_vizn3d_iot_smart_lock"/>
-		</configuration>
-		<configuration configurationName="Release">
-			<resource resourceType="PROJECT" workspacePath="/sln_vizn3d_iot_smart_lock"/>
-		</configuration>
 	</storageModule>
 </cproject>

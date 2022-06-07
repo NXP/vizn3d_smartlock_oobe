@@ -292,5 +292,12 @@ int APP_RegisterHalDevices(void)
         }
 #endif
     }
+    ret = HAL_Dev_ATCommands_Register();
+    if (ret != 0)
+    {
+        LOGE("HAL_Dev_ATCommands_Register error %d", ret);
+        return ret;
+    }
+
     return ret;
 }

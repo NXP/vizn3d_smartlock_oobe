@@ -733,7 +733,8 @@ facedb_status_t HAL_Facedb_DelFaceWithID(uint16_t id)
         }
         else
         {
-            LOGE("Facedb: No face associated with the specified ID \"%d\".", id);
+            LOGE("FaceDb: No face associated with the specified ID \"%d\".", id);
+            ret = kFaceDBStatus_WrongID;
         }
 
         _Facedb_Unlock();

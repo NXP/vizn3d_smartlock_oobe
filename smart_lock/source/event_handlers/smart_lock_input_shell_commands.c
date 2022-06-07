@@ -13,6 +13,10 @@
 
 #include "app_config.h"
 #include <FreeRTOS.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <stdlib.h>
 
 #include "fsl_component_serial_manager.h"
 #include "fsl_component_serial_port_usb.h"
@@ -39,6 +43,9 @@
  ******************************************************************************/
 
 #define SHELL_PROMPT "SHELL>> "
+
+#define configLOGGING_MAX_MESSAGE_LENGTH 128
+#define LOG_ERROR_PRINT "Error: failed to print a message\r\n"
 
 /*******************************************************************************
  * Prototypes
@@ -198,6 +205,7 @@ static framework_request_t s_FrameworkRequest;
 static input_dev_callback_t s_InputCallback;
 static input_dev_t *s_SourceShell; /* Shell device that commands are sent over */
 static shell_handle_t s_ShellHandle;
+AT_NONCACHEABLE_SECTION_ALIGN_DTC(static char s_logbuf[configLOGGING_MAX_MESSAGE_LENGTH], 8);
 /*******************************************************************************
  * Code
  ******************************************************************************/
@@ -253,6 +261,30 @@ void APP_InputDev_Shell_RegisterShellCommands(shell_handle_t shellContextHandle,
  * @param configs pointer to the array of configs for the given device
  * @param printTableHeader whether to print the table's header b/c this is the first entry to the table
  */
+
+int LOG_SHELL_Printf(const char *formatString, ...)
+{
+    va_list ap;
+    int status;
+
+    va_start(ap, formatString);
+    status = vsnprintf(s_logbuf, configLOGGING_MAX_MESSAGE_LENGTH, formatString, ap);
+    va_end(ap);
+
+    if (s_ShellHandle)
+    {
+        if (status >= 0)
+        {
+            SHELL_Write(s_ShellHandle, s_logbuf, strlen(s_logbuf));
+        }
+        else
+        {
+            SHELL_Write(s_ShellHandle, LOG_ERROR_PRINT, strlen(LOG_ERROR_PRINT));
+        }
+    }
+
+    return 0;
+}
 
 static void _PrintDeviceConfigTable(uint32_t devId, char *deviceName, hal_device_config *configs, bool printTableHeader)
 {

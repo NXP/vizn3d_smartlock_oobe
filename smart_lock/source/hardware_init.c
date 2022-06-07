@@ -607,6 +607,7 @@ void BOARD_InitCSICameraResource(void)
 
 void BOARD_InitBleQn9090Resource(void)
 {
+    BOARD_InitBluetoothQn9090Pins();
     /* here move gpio pin mux into bootloader to avoid noise on UART interface,
      * it will affect QN9090 UART read. */
     gpio_pin_config_t pin_config = {
@@ -664,7 +665,7 @@ void BOARD_InitHardware(void)
     BOARD_ConfigMPU();
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
-    BOARD_InitDebugConsole();
+//    BOARD_InitDebugConsole();
     BOARD_InitEDMA();
     BOARD_InitPushButtonPins();
     BOARD_InitLedPins();

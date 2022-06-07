@@ -95,6 +95,7 @@ typedef struct _remote_reg_result_t
 {
     uint8_t result;
     char *name;
+    uint16_t id;
 } remote_reg_result_t;
 
 typedef struct _remote_reg_event_t

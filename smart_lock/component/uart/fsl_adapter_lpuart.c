@@ -1099,7 +1099,8 @@ void LPUART8_IRQHandler(void)
 #endif
 #endif
 
-// DEBUG_CONSOLE_UART is LPUART12 on VIZN3 board
+#if 0
+//DEBUG_CONSOLE_UART is LPUART12 on VIZN3 board
 #if defined(LPUART12) && (SDK_DEBUGCONSOLE == 1U)
 #if defined(FSL_FEATURE_LPUART_HAS_SEPARATE_RX_TX_IRQ) && FSL_FEATURE_LPUART_HAS_SEPARATE_RX_TX_IRQ
 void LPUART12_TX_IRQHandler(void)
@@ -1119,6 +1120,7 @@ void LPUART12_IRQHandler(void)
     HAL_UartInterruptHandle(12);
     SDK_ISR_EXIT_BARRIER;
 }
+#endif
 #endif
 #endif
 

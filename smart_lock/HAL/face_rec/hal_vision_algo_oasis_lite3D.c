@@ -1338,6 +1338,8 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_InputNotify(const vision_a
                     uint16_t id         = INVALID_FACE_ID;
                     s_UserNameReference = remoteEvt.regData->name;
                     res.result = OASISLT_registration_by_feature(remoteEvt.regData->facedata, NULL, 0, &id, NULL);
+                    res.id = id;
+                    res.name = HAL_Facedb_GetName(id);
 
                     if (res.result == OASIS_REG_RESULT_DUP)
                     {

@@ -30,19 +30,28 @@ extern "C" {
 #include "fsl_debug_console.h"
 #include "fwk_common.h"
 #include "fwk_sln_config.h"
+#include "fsl_shell.h"
 #else
-#define PRINTF printf
+#define LOG_PRINTF printf
 #endif
 
 #include "fwk_sln_platform.h"
 
-#define printlog(tag, fmt, args...)                                                 \
-    {                                                                               \
-        do                                                                          \
-        {                                                                           \
-            uint32_t t = sln_current_time_us();                                     \
-            PRINTF("[%7d.%3d][%s] - " fmt "\r\n", t / 1000, t % 1000, tag, ##args); \
-        } while (0);                                                                \
+
+int LOG_SHELL_Printf(const char *formatString, ...);
+
+#define LOG_PRINTF LOG_SHELL_Printf
+
+#define printlog(tag, fmt, args...)                  \
+    {                                                \
+        do                                           \
+        {                                            \
+            uint32_t t = sln_current_time_us();      \
+            LOG_PRINTF("[%7d.%3d]", t / 1000, t % 1000); \
+            LOG_PRINTF("[%s] - ", tag);                  \
+            LOG_PRINTF(fmt, ##args);                     \
+            LOG_PRINTF("\r\n");                          \
+        } while (0);                                 \
     }
 
 #ifndef LOG
@@ -84,7 +93,7 @@ extern "C" {
     {                                                                                   \
         if (FWK_ConfigGetLogLevel() >= kLOGLevel_Error)                                 \
         {                                                                               \
-            PRINTF("\r\n%s:%d: In function \"%s\":\r\n", __FILE__, __LINE__, __func__); \
+            LOG_PRINTF("\r\n%s:%d: In function \"%s\":\r\n", __FILE__, __LINE__, __func__); \
             LOG("Error", fmt, ##args);                                                  \
         }                                                                               \
     }
