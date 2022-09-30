@@ -185,7 +185,7 @@ public class RegistrationConfirmActivity extends AppCompatActivity {
         } else {
             StatusPopUp.getStatusPopUpInstance().showProgress(
                     this, findViewById(R.id.registration_confirm_view), getString(R.string.state_registering));
-            BLEService.INSTANCE.sendRegistrationReq(mNameEditText.getText().toString(), mFaceFeature, reRegistration);
+            BLEService.INSTANCE.sendRegistrationReq(nameText, mFaceFeature, reRegistration);
         }
     }
 

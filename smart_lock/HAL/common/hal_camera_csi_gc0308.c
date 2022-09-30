@@ -36,7 +36,7 @@
 #define CAMERA_HEIGHT           480
 #define CAMERA_BYTES_PER_PIXEL  2
 #define CAMERA_DEV_BUFFER_COUNT 4
-
+#define CAMERA_MCLK_FREQ        12000000U
 #define CAMERA_RGB_CONTROL_FLAGS (kCAMERA_HrefActiveHigh | kCAMERA_DataLatchOnRisingEdge)
 
 SDK_ALIGN(
@@ -47,6 +47,7 @@ static uint8_t *s_pCurrentFrameBuffer = NULL;
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
+void BOARD_InitCSICameraResource(uint32_t mclk);
 void BOARD_PullCSICameraResetPin(bool pullUp);
 void BOARD_PullCSICameraPowerDownPin(bool pullUp);
 status_t BOARD_CSICameraI2CSend(
@@ -74,7 +75,7 @@ static gc0308_resource_t gc0308Resource = {
     .i2cReceiveFunc    = BOARD_CSICameraI2CReceive,
     .pullResetPin      = BOARD_PullCSICameraResetPin,
     .pullPowerDownPin  = BOARD_PullCSICameraPowerDownPin,
-    .inputClockFreq_Hz = 24000000,
+    .inputClockFreq_Hz = CAMERA_MCLK_FREQ,
 };
 
 static camera_device_handle_t cameraDevice = {
@@ -131,7 +132,7 @@ hal_camera_status_t HAL_CameraDev_CsiGc0308_Init(camera_dev_t *dev, int width, i
     cameraConfig.controlFlags               = CAMERA_RGB_CONTROL_FLAGS;
     cameraConfig.framePerSec                = 15;
 
-    BOARD_InitCSICameraResource();
+    BOARD_InitCSICameraResource(CAMERA_MCLK_FREQ);
 
     _camera_init_interface();
 

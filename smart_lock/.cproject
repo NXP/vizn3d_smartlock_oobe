@@ -68,8 +68,8 @@
 									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
 									<listOptionValue builtIn="false" value="FWK_SUPPORT_STATIC_ALLOCATION=1"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MAJOR=1"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=2"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=1"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=3"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=0"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_3D"/>
 									<listOptionValue builtIn="false" value="HEADLESS_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL=1"/>
@@ -241,8 +241,8 @@
 									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
 									<listOptionValue builtIn="false" value="FWK_SUPPORT_STATIC_ALLOCATION=1"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MAJOR=1"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=2"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=1"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=3"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=0"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_3D"/>
 									<listOptionValue builtIn="false" value="HEADLESS_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL=1"/>
@@ -885,8 +885,8 @@
 									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
 									<listOptionValue builtIn="false" value="FWK_SUPPORT_STATIC_ALLOCATION=1"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MAJOR=1"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=2"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=1"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=3"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=0"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_3D"/>
 									<listOptionValue builtIn="false" value="HEADLESS_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL=1"/>
@@ -1067,8 +1067,8 @@
 									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
 									<listOptionValue builtIn="false" value="FWK_SUPPORT_STATIC_ALLOCATION=1"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MAJOR=1"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=2"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=1"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=3"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=0"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_3D"/>
 									<listOptionValue builtIn="false" value="HEADLESS_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL=1"/>

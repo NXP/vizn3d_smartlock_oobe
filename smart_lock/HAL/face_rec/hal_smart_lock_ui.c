@@ -476,8 +476,17 @@ static void ui_drawDebugWindow(oasis_lite_debug_t debugInfo)
                  (int)kFont_OpenSans8, txt);
     debugRow += 15;
     memset(txt, 0, sizeof(txt));
-    sprintf(txt, "pose: %s  ", debugInfo.isSideFace ? "side" : "front");
-    textColor = debugInfo.isSideFace ? RGB565_RED : RGB565_GREEN;
+	char* hint[OASISLT_FACE_ORIENTATION_NUM + 1] =
+	{
+			"front",
+			"left",
+			"right",
+			"up",
+			"down",
+			"invalid"
+	};
+	sprintf(txt, "Face ORI:%s", hint[debugInfo.OriExpected]);
+	textColor = RGB565_GREEN;
     gfx_drawText(&s_UiSurface, UI_MAINWINDOW_DEBUG_X, UI_MAINWINDOW_DEBUG_Y + debugRow, textColor, 0x0,
                  (int)kFont_OpenSans8, txt);
 }

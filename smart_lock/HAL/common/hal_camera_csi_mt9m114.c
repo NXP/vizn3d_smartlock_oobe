@@ -35,6 +35,7 @@
 #define CAMERA_HEIGHT           480
 #define CAMERA_BYTES_PER_PIXEL  2
 #define CAMERA_DEV_BUFFER_COUNT 4
+#define CAMERA_MCLK_FREQ        24000000U
 
 #define CAMERA_RGB_CONTROL_FLAGS (kCAMERA_HrefActiveHigh | kCAMERA_DataLatchOnRisingEdge)
 
@@ -46,7 +47,7 @@ static uint8_t *s_pCurrentFrameBuffer = NULL;
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
-void BOARD_InitCSICameraResource(void);
+void BOARD_InitCSICameraResource(uint32_t mclk);
 void BOARD_PullCSICameraResetPin(bool pullUp);
 void BOARD_PullCSICameraPowerDownPin(bool pullUp);
 status_t BOARD_CSICameraI2CSend(
@@ -74,7 +75,7 @@ static mt9m114_resource_t s_Mt9m114Resource = {
     .i2cReceiveFunc    = BOARD_CSICameraI2CReceive,
     .pullResetPin      = BOARD_PullCSICameraResetPin,
     .pullPowerDownPin  = BOARD_PullCSICameraPowerDownPin,
-    .inputClockFreq_Hz = 24000000,
+    .inputClockFreq_Hz = CAMERA_MCLK_FREQ,
     .i2cAddr           = MT9M114_I2C_ADDR,
 };
 
@@ -130,7 +131,7 @@ static hal_camera_status_t HAL_CameraDev_CsiMt9m114_Init(camera_dev_t *dev, int 
     cameraConfig.controlFlags               = CAMERA_RGB_CONTROL_FLAGS;
     cameraConfig.framePerSec                = 15;
 
-    BOARD_InitCSICameraResource();
+    BOARD_InitCSICameraResource(CAMERA_MCLK_FREQ);
 
     _camera_init_interface();
 

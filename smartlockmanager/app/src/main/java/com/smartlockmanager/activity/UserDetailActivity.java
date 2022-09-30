@@ -44,8 +44,12 @@ import org.greenrobot.eventbus.ThreadMode;
 import static com.smartlockmanager.database.AppDatabase.databaseWriteExecutor;
 import static com.smartlockmanager.utility.SdkUtils.fullScreen;
 
+import java.util.regex.Pattern;
+
 public class UserDetailActivity extends AppCompatActivity {
     private static final String TAG = "SLM_RA";
+
+    private static final Pattern namePattern = Pattern.compile("[a-zA-Z0-9]+", Pattern.CASE_INSENSITIVE);
 
     private static final int REQUEST_CODE_REGISTRATION = 100;
     public static final int REGISTRATION_RESULT_DUPLICATE = 1;
@@ -233,12 +237,19 @@ public class UserDetailActivity extends AppCompatActivity {
 
         TextInputEditText popup_name_view = popupWindow.getContentView().findViewById(R.id.popup_user_detail_name);
         user_name = popup_name_view.getText().toString();
+        user_name = user_name.replaceAll("( +)"," ").trim();
 
         switch(pressedButton){
             case BUTTON_UPDATE:
-                StatusPopUp.getStatusPopUpInstance().showProgress(
-                        this, findViewById(R.id.user_detail_view), getString(R.string.state_updating_name));
-                BLEService.INSTANCE.sendUpdateUserInfoReq(Integer.parseInt(user_id),user_name);
+                if (!namePattern.matcher(user_name).find()) {
+                    StatusPopUp.getStatusPopUpInstance().showErrorPopUp(
+                            this, findViewById(R.id.user_detail_view), getString(R.string.error_registration_no_name));
+                    popup_name_view.getText().clear();
+                } else {
+                    StatusPopUp.getStatusPopUpInstance().showProgress(
+                            this, findViewById(R.id.user_detail_view), getString(R.string.state_updating_name));
+                    BLEService.INSTANCE.sendUpdateUserInfoReq(Integer.parseInt(user_id), user_name);
+                }
                 break;
             case BUTTON_DELETE:
                 StatusPopUp.getStatusPopUpInstance().showProgress(
