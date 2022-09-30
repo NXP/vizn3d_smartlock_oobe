@@ -216,6 +216,7 @@ static void _oasis_lite_EvtCb(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTC
             FWK_Profiler_StartEvent(OASISLT_EVT_DET_START);
             memset(debugInfo, 0, sizeof(oasis_lite_debug_t));
             debugInfo->faceID = INVALID_FACE_ID;
+            debugInfo->OriExpected = OASISLT_FACE_ORIENTATION_NUM;
         }
         break;
 
@@ -255,11 +256,11 @@ static void _oasis_lite_EvtCb(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTC
                 debugInfo->isOk = 1;
                 OASIS_LOGD("[OASIS]Quality:ok!.");
             }
-            else if (para->qualityResult == OASIS_QUALITY_RESULT_FACE_SIDE_FACE)
+            else if (para->qualityResult == OASIS_QUALITY_RESULT_FACE_ORIENTATION_UNMATCH)
             {
                 qualityCheck          = kOasisLiteQualityCheck_NonFrontalFace;
-                debugInfo->isSideFace = 1;
-                OASIS_LOGD("[OASIS]Quality:side face!.");
+                debugInfo->OriExpected = OASISLT_FACE_ORIENTATION_NUM;
+                OASIS_LOGD("[OASIS]Quality:face orientation unmatch!.");
             }
             else if (para->qualityResult == OASIS_QUALITY_RESULT_FACE_TOO_SMALL)
             {
@@ -291,6 +292,10 @@ static void _oasis_lite_EvtCb(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTC
             else if (para->qualityResult == OASIS_QUALITY_RESULT_DEPTH_INVALID)
             {
                 OASIS_LOGD("[OASIS]Quality:Depth Invalid!.");
+            } /* OASIS_QUALITY_RESULT_INVALID for the case there is no face detected */
+            else
+            {
+            	OASIS_LOGD("[OASIS]Quality check res:%d.",para->qualityResult);
             } /* OASIS_QUALITY_RESULT_INVALID for the case there is no face detected */
 
             if (qualityCheck != pOasisLite->qualityCheck)
@@ -330,6 +335,7 @@ static void _oasis_lite_EvtCb(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTC
                 result->face_id         = para->faceID;
                 debugInfo->sim          = para->reserved[0];
                 debugInfo->faceID       = para->faceID;
+                debugInfo->OriExpected  = para->faceOrientation;
                 char *faceName          = HAL_Facedb_GetName(para->faceID);
 
                 if (faceName != NULL)
@@ -350,6 +356,7 @@ static void _oasis_lite_EvtCb(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTC
                 result->face_id         = -1;
                 debugInfo->sim          = para->reserved[0];
                 debugInfo->faceID       = para->faceID;
+                debugInfo->OriExpected  = para->faceOrientation;
                 // unknown face
                 OASIS_LOGD("[OASIS]UNKNOWN_FACE:Sim:[%d.%d%]:[%d].", (int)(para->reserved[0] / 100),
                            (int)(para->reserved[0] % 100), para->faceID);
@@ -374,6 +381,7 @@ static void _oasis_lite_EvtCb(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTC
 
         case OASISLT_EVT_REG_IN_PROGRESS:
         {
+        	debugInfo->OriExpected = para->faceOrientation;
 #if HEADLESS_ENABLE
             pOasisLite->headless_reg_status++;
 #endif
@@ -480,7 +488,7 @@ static int _oasis_lite_DeleteFace(uint16_t faceId, void *userData)
     return ret;
 }
 
-static int _oasis_lite_AddFace(uint16_t *face_id, void *face_data, void *snapshot, int snapshot_length, void *userData)
+static int _oasis_lite_AddFace(uint16_t *faceId, void *faceData, SnapshotItem_t* snapshotData, int snapshotNum, void *userData)
 {
     OASIS_LOGI("++_oasis_lite_AddFace");
     facedb_status_t status;
@@ -492,8 +500,8 @@ static int _oasis_lite_AddFace(uint16_t *face_id, void *face_data, void *snapsho
 
     if ((status == kFaceDBStatus_Success) && (newFaceId != INVALID_ID))
     {
-        *face_id = newFaceId;
-        status   = HAL_Facedb_AddFace(newFaceId, s_UserNameReference, face_data, faceItemSize);
+        *faceId = newFaceId;
+        status   = HAL_Facedb_AddFace(newFaceId, s_UserNameReference, faceData, faceItemSize);
         if (status == kFaceDBStatus_Success)
         {
             s_UserNameReference = NULL;
@@ -510,7 +518,7 @@ static int _oasis_lite_AddFace(uint16_t *face_id, void *face_data, void *snapsho
 }
 
 static int _oasis_lite_UpdateFace(
-    uint16_t faceId, void *faceData, void *snapshotData, int data_length, int offset, void *userData)
+    uint16_t faceId, void *faceData, SnapshotItem_t* snapshotData, int snapshotNum, void *userData)
 {
     OASIS_LOGI("++_oasis_lite_UpdateFace");
 
@@ -1041,6 +1049,7 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_Init(vision_algo_dev_t *de
     s_OasisLite.pframes[OASISLT_INT_FRAME_IDX_3D]       = &s_OasisLite.frames[OASISLT_INT_FRAME_IDX_3D];
 
     // init the oasis lite config
+    memset(&s_OasisLite.config,0,sizeof(s_OasisLite.config));
     s_OasisLite.config.imgType              = OASIS_IMG_TYPE_IR_RGB_3D_TRIPLE;
     s_OasisLite.config.minFace              = OASIS_DETECT_MIN_FACE;
     s_OasisLite.config.cbs.EvtCb            = _oasis_lite_EvtCb;
@@ -1068,12 +1077,12 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_Init(vision_algo_dev_t *de
 
     // Get the face recognition threshold
     unsigned int faceRecThreshold           = 0;
-    s_OasisLite.config.Threshold            = 0;
+
     hal_config_status_t faceRecThresholdRet = HAL_OutputDev_SmartLockConfig_GetFaceRecThreshold(&faceRecThreshold);
     if ((faceRecThresholdRet == kSLNConfigStatus_Success) &&
         ((faceRecThreshold >= MINIMUM_FACE_REC_THRESHOLD) && (faceRecThreshold <= MAXIMUM_FACE_REC_THRESHOLD)))
     {
-        s_OasisLite.config.Threshold = faceRecThreshold;
+        s_OasisLite.config.runtimePara.recogTH = faceRecThreshold/1000.0f;
     }
 
     oasisRet = OASISLT_init(&s_OasisLite.config);

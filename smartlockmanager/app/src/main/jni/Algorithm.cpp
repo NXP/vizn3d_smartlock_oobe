@@ -235,12 +235,12 @@ static int _oasis_lite_GetFaces(uint16_t *face_ids, void **pFaces, unsigned int 
     return ret;
 }
 
-static int _oasis_lite_AddFace(uint16_t *face_id, void *face_data, void *snapshot, int snapshot_length, void* userData)
+static int _oasis_lite_AddFace(uint16_t* faceId, void* faceData, SnapshotItem_t* snapshotData, int snapshotNum, void* userData)
 {
     int ret            = 1;
     int face_item_size = OASISLT_getFaceItemSize();
     LOGI("++_oasis_lite_AddFace %d\r\n", face_item_size);
-    char* pFaceData = (char*)face_data;
+    char* pFaceData = (char*)faceData;
 
     for (int i=0; i< face_item_size; i++){
         gOasisLite.face_data[i] = pFaceData[i];
@@ -253,7 +253,7 @@ static int _oasis_lite_AddFace(uint16_t *face_id, void *face_data, void *snapsho
     return ret;
 }
 
-static int _oasis_lite_UpdateFace(uint16_t face_id, void *face_data, void *snapshot_data, int data_length, int offset, void* userData)
+static int _oasis_lite_UpdateFace(uint16_t faceId, void* faceData, SnapshotItem_t* snapshotData, int snapshotNum, void* userData)
 {
     //LOGD("++_oasis_lite_UpdateFace\r\n");
     //LOGD("--_oasis_lite_UpdateFace\r\n");

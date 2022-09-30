@@ -200,7 +200,7 @@ sln_iot_common_platform    Name: IoT Solutions Common Platform
                            Origin: NXP                                       
 
 oasis                      Name: IoT Solution Oasis Library                  
-                           Version: 1.0.2                                    
+                           Version: 4.82.0 / 1.47.0
                            Outgoing License: Proprietary                     
                            License File: LA_OPT_NXP_Software_License.txt     
                            Format: object code & header files                
