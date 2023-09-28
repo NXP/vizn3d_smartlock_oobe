@@ -452,13 +452,13 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
     GC0308_Write(handle, 0x3e, 1U, 0x00);
     GC0308_Write(handle, 0x3f, 1U, 0x00);
     GC0308_Write(handle, 0x50, 1U, 0x10);
-    GC0308_Write(handle, 0x53, 1U, 0x82);
+    GC0308_Write(handle, 0x53, 1U, 0x80); // 0x82
     GC0308_Write(handle, 0x54, 1U, 0x80);
     GC0308_Write(handle, 0x55, 1U, 0x80);
-    GC0308_Write(handle, 0x56, 1U, 0x82);
-    GC0308_Write(handle, 0x57, 1U, 0x78);
-    GC0308_Write(handle, 0x58, 1U, 0x78);
-    GC0308_Write(handle, 0x59, 1U, 0x86);
+    GC0308_Write(handle, 0x56, 1U, 0x80); // 0x82
+    GC0308_Write(handle, 0x57, 1U, 0x80); // 0x78
+    GC0308_Write(handle, 0x58, 1U, 0x80); // 0x78
+    GC0308_Write(handle, 0x59, 1U, 0x80); // 0x86
 
     GC0308_Write(handle, 0x8b, 1U, 0x40);
     GC0308_Write(handle, 0x8c, 1U, 0x40);
@@ -527,7 +527,7 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
     GC0308_Write(handle, 0xec, 1U, 0x00);
 
     GC0308_Write(handle, 0xed, 1U, 0x04);
-    GC0308_Write(handle, 0xee, 1U, 0x40);
+    GC0308_Write(handle, 0xee, 1U, 0x80); // 0x40
     GC0308_Write(handle, 0xef, 1U, 0x40);
     GC0308_Write(handle, 0x80, 1U, 0x03);
     GC0308_Write(handle, 0x80, 1U, 0x03);
@@ -690,9 +690,9 @@ static void GC0308_WriteMoreRegisters(camera_device_handle_t *handle)
     GC0308_Write(handle, 0x14, 1U, 0x44);
     GC0308_Write(handle, 0x15, 1U, 0x44);
 
-    GC0308_Write(handle, 0x1c, 1U, 0x70);
-    GC0308_Write(handle, 0x1d, 1U, 0x58);
-    GC0308_Write(handle, 0x1e, 1U, 0x50);
+    GC0308_Write(handle, 0x1c, 1U, 0x80); // 0x70
+    GC0308_Write(handle, 0x1d, 1U, 0x80); // 0x58
+    GC0308_Write(handle, 0x1e, 1U, 0x80); // 0x50
 
     GC0308_Write(handle, 0x19, 1U, 0x50);
     GC0308_Write(handle, 0x1a, 1U, 0xd8);
@@ -1243,6 +1243,25 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
             GC0308_SetEffect(handle, kcam_effect_enc_normal);
         return kStatus_Success;
     }
+#if 1
+    else if (cmd == kCAMERA_DeviceExposureMode)
+    {
+        GC0308_Write(handle, 0xfe, 1U, 0x00); /* set page0 */
+
+        switch (arg)
+        {
+            case CAMERA_EXPOSURE_MODE_AUTO:
+                GC0308_Write(handle, 0xd2, 1U, 0x90); /* close AEC */
+                break;
+            case CAMERA_EXPOSURE_MODE_MANU:
+                GC0308_Write(handle, 0xd2, 1U, 0x10); /* close AEC */
+                break;
+            default:
+                break;
+        }
+        return kStatus_Success;
+    }
+#else
     else if (cmd == kCAMERA_DeviceExposureMode)
     {
         uint8_t reg_value;
@@ -1278,6 +1297,109 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
             default:
                 break;
         }
+        return kStatus_Success;
+    }
+#endif
+    else if (cmd == kCAMERA_DeviceBrightnessAdjust)
+    {
+#if 0
+    //This steps can be tuned for different configuration:
+    // Sharing a common IIC for dual camera
+    // Seperate IIC for each camera
+    // Camera FPS
+#define GC0308_BRIGHTNESS_ADJUST_STEP    0x3
+#define GC0308_BRIGHTNESS_MAX            0xFF
+#define GC0308_BRIGHTNESS_TARGET_DEFAULT 0x50
+
+            GC0308_Write(handle, 0xfe, 1U, 0x00);/* set page0 */
+
+            //read target birghtness
+            uint8_t reg_value;
+            status_t status = GC0308_Read(handle, 0xD3, 1u, &reg_value);
+            if (kStatus_Success != status)
+            {
+                return status;
+            }
+            //UsbShell_Printf("[GC0308]:targetY:%d dir:%d\r\n", reg_value,arg);
+
+            switch(arg) {
+    			case CAMERA_BRIGHTNESS_DECREASE:
+    				if (reg_value >= GC0308_BRIGHTNESS_ADJUST_STEP)
+    				{
+    					GC0308_Write(handle, 0xd3, 1U, reg_value - GC0308_BRIGHTNESS_ADJUST_STEP);
+    				}else
+    				{
+    					GC0308_Write(handle, 0xd3, 1U, 0);
+    				}
+    			break;
+    			case CAMERA_BRIGHTNESS_INCREASE:
+    				if (reg_value + GC0308_BRIGHTNESS_ADJUST_STEP <= GC0308_BRIGHTNESS_MAX)
+    				{
+    					GC0308_Write(handle, 0xd3, 1U, reg_value + GC0308_BRIGHTNESS_ADJUST_STEP);
+    				}else
+    				{
+    					GC0308_Write(handle, 0xd3, 1U, GC0308_BRIGHTNESS_MAX);
+    				}
+    			break;
+    			case CAMERA_BRIGHTNESS_DEFAULT:
+    				GC0308_Write(handle, 0xd3, 1U, GC0308_BRIGHTNESS_TARGET_DEFAULT);
+    			break;
+
+    			default:
+    				break;
+            }
+
+
+    //        uint8_t updated_reg_value;
+    //        GC0308_Read(handle, 0xD3, 1u, &updated_reg_value);
+            //UsbShell_Printf("[GC0308 0x%8x]:targetY:%d-->%d dir:%d\r\n", (uint32_t)handle,reg_value,updated_reg_value,arg);
+#else
+#define GC0308_BRIGHTNESS_EXPOSURE_DEFAULT       0x96
+#define GC0308_BRIGHTNESS_EXPOSURE_MAX           ((1UL << 12) - 1)
+#define GC0308_BRIGHTNESS_EXPOSURE_INC_DEC_RATIO (0.25f)
+
+        // adjust brightness manually
+        // close AEC
+        GC0308_Write(handle, 0xd2, 1U, 0x10); /* close AEC */
+
+        uint8_t exposureH, exposureL;
+        GC0308_Read(handle, 0x3, 1u, &exposureH);
+        GC0308_Read(handle, 0x4, 1u, &exposureL);
+
+        uint16_t exposure = exposureH & 0xF;
+        exposure          = (exposure << 8) | exposureL;
+
+        // uint16_t exposure_copy = exposure;
+        switch (arg)
+        {
+            case CAMERA_BRIGHTNESS_DECREASE:
+                exposure *= (1 - GC0308_BRIGHTNESS_EXPOSURE_INC_DEC_RATIO);
+                GC0308_Write(handle, 0x4, 1U, exposure & 0xFF);
+                GC0308_Write(handle, 0x3, 1U, exposure >> 8);
+                break;
+            case CAMERA_BRIGHTNESS_INCREASE:
+                exposure *= (1 + GC0308_BRIGHTNESS_EXPOSURE_INC_DEC_RATIO);
+                if (exposure >= GC0308_BRIGHTNESS_EXPOSURE_MAX)
+                {
+                    exposure = GC0308_BRIGHTNESS_EXPOSURE_MAX;
+                }
+
+                GC0308_Write(handle, 0x4, 1U, exposure & 0xFF);
+                GC0308_Write(handle, 0x3, 1U, exposure >> 8);
+
+                break;
+            case CAMERA_BRIGHTNESS_DEFAULT:
+                GC0308_Write(handle, 0x4, 1U, GC0308_BRIGHTNESS_EXPOSURE_DEFAULT & 0xFF);
+                GC0308_Write(handle, 0x3, 1U, GC0308_BRIGHTNESS_EXPOSURE_DEFAULT >> 8);
+                break;
+
+            default:
+                break;
+        }
+            // PRINTF("[GC0308 0x%8x]:exposure:%d-->%d\r\n",(uint32_t)handle,exposure_copy,exposure);
+
+#endif
+
         return kStatus_Success;
     }
     else

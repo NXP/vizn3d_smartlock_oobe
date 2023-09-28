@@ -32,7 +32,7 @@
 #include "sln_device_utils.h"
 #include "wm_net.h"
 
-#include "face_rec_rt_info.h"
+//#include "face_rec_rt_info.h"
 
 /*******************************************************************************
  * Definitions
@@ -63,7 +63,7 @@ static shell_status_t _ListCommand(shell_handle_t shellContextHandle, int32_t ar
 static shell_status_t _RenameCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 static shell_status_t _VerboseCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 static shell_status_t _RecordCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
-static shell_status_t _RtInfoCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
+// static shell_status_t _RtInfoCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 static shell_status_t _OasisCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 static shell_status_t _FaceRecThresholdCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv);
 
@@ -100,9 +100,13 @@ static SHELL_COMMAND_DEFINE(del, (char *)"\r\n\"del -n <username>\": Del user by
         "\"del -a \": Del all.\r\n", _DelCommand, SHELL_IGNORE_PARAMETER_COUNT);
 static SHELL_COMMAND_DEFINE(display_output,
                      (char *)"\r\n\"display_output <UVC|panel> \": Set display device.\r\n"
-                    		 "\"display_output\": Get the display device.\r\n"
-                    		 "\"display_output source <RGB|3DIR|3DDEPTH> \": Set display source.\r\n"
-                    		 "\"display_output source\": Get display source.\r\n" ,
+                             "\"display_output\": Get the display device.\r\n"
+#if SMART_LOCK_3D
+                             "\"display_output source <RGB|3DIR|3DDEPTH> \": Set display source.\r\n"
+#else
+                             "\"display_output source <RGB|2DIR> \": Set display source.\r\n"
+#endif
+                             "\"display_output source\": Get display source.\r\n" ,
                      _DisplayOutputCommand,
                      SHELL_IGNORE_PARAMETER_COUNT);
 static SHELL_COMMAND_DEFINE(
@@ -172,16 +176,19 @@ static SHELL_COMMAND_DEFINE(record,
                             "\"record info\": get recording info\r\n",
                             _RecordCommand,
                             SHELL_IGNORE_PARAMETER_COUNT);
+
 static SHELL_COMMAND_DEFINE(oasis,
                             (char *)"\r\n\"oasis <start|stop>\": start/stop oasis\r\n"
-                            "\"oasis info\": get the state of oasis.\r\n",
+							"\"oasis startRec|stopRec\":  start/stop rec.\r\n"
+							"\"oasis stopReg|stopDeReg\": stop reg/dereg.\r\n",
+                            // "\"oasis info\": get the state of oasis.\r\n",
                             _OasisCommand,
                             SHELL_IGNORE_PARAMETER_COUNT);
 
-static SHELL_COMMAND_DEFINE(rtinfo,
-                            (char *)"\r\n\"rtinfo\": runtime information filter\r\n",
-                            _RtInfoCommand,
-                            SHELL_IGNORE_PARAMETER_COUNT);
+// static SHELL_COMMAND_DEFINE(rtinfo,
+//                            (char *)"\r\n\"rtinfo\": runtime information filter\r\n",
+//                            _RtInfoCommand,
+//                            SHELL_IGNORE_PARAMETER_COUNT);
 
 static SHELL_COMMAND_DEFINE(facerec_threshold,
                             (char *)"\r\n\"facerec_threshold\": show the current face recognition threshold\r\n"
@@ -234,7 +241,7 @@ void APP_InputDev_Shell_RegisterShellCommands(shell_handle_t shellContextHandle,
 #endif
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(get_manager));
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(record));
-    SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(rtinfo));
+    //    SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(rtinfo));
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(oasis));
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(facerec_threshold));
 }
@@ -384,12 +391,20 @@ static int _HalEventsHandler(uint32_t event_id, void *response, event_status_t s
         case kEventFaceRecID_GetUserList:
         {
             user_info_event_t usersInfo = *(user_info_event_t *)response;
-            for (int index = 0; index < usersInfo.count; index++)
+            if (usersInfo.count == 0)
             {
-                char savedStatus[10];
-                face_user_info_t userInfo = usersInfo.userInfo[index];
-                strcpy(savedStatus, userInfo.isSaved ? "Saved" : "Not saved");
-                SHELL_Printf(s_ShellHandle, "\r\n%-10s - Id %3d \tName - %s", savedStatus, userInfo.id, userInfo.name);
+                SHELL_Printf(s_ShellHandle, "\r\nNo user registered!");
+            }
+            else
+            {
+                for (int index = 0; index < usersInfo.count; index++)
+                {
+                    char savedStatus[10];
+                    face_user_info_t userInfo = usersInfo.userInfo[index];
+                    strcpy(savedStatus, userInfo.isSaved ? "Saved" : "Not saved");
+                    SHELL_Printf(s_ShellHandle, "\r\n%-10s - Id %4d \tName - %s", savedStatus, userInfo.id,
+                                 userInfo.name);
+                }
             }
         }
         break;
@@ -1238,7 +1253,6 @@ static shell_status_t _VersionCommand(shell_handle_t shellContextHandle, int32_t
         uint32_t runningFromBankB = (((*(uint32_t *)(APPLICATION_RESET_ISR_ADDRESS)-FLEXSPI_AMBA_BASE) &
                                       (FICA_IMG_BANK_APP_MASK)) == FICA_IMG_APP_B_ADDR);
 
-
         if (runningFromBankA)
         {
             SHELL_Printf(shellContextHandle, "App running in bankA\r\n");
@@ -1890,6 +1904,7 @@ static shell_status_t _RecordCommand(shell_handle_t shellContextHandle, int32_t 
     return kStatus_SHELL_Success;
 }
 
+#if 0
 static shell_status_t _RtInfoCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
 {
     char *pEnd;
@@ -2002,6 +2017,8 @@ static shell_status_t _RtInfoCommand(shell_handle_t shellContextHandle, int32_t 
     return kStatus_SHELL_Success;
 }
 
+#endif
+
 static shell_status_t _OasisCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
 {
     uint32_t receiverList;
@@ -2027,6 +2044,22 @@ static shell_status_t _OasisCommand(shell_handle_t shellContextHandle, int32_t a
     else if (!strcmp((char *)argv[1], "info"))
     {
         s_FaceRecEvent.eventBase.eventId = kEventFaceRecID_OasisGetState;
+    }
+    else if (!strcmp((char *)argv[1], "startRec"))
+    {
+        s_FaceRecEvent.eventBase.eventId = kEventFaceRecID_StartRec;
+    }
+    else if (!strcmp((char *)argv[1], "stopRec"))
+    {
+        s_FaceRecEvent.eventBase.eventId = kEventFaceRecID_StopRec;
+    }
+    else if (!strcmp((char *)argv[1], "stopReg"))
+    {
+        s_FaceRecEvent.eventBase.eventId = kEventFaceRecID_AddUserStop;
+    }
+    else if (!strcmp((char *)argv[1], "stopDeReg"))
+    {
+        s_FaceRecEvent.eventBase.eventId = kEventFaceRecID_DelUserStop;
     }
     else
     {

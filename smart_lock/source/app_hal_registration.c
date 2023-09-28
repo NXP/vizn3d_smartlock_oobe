@@ -262,6 +262,26 @@ int APP_RegisterHalDevices(void)
         return ret;
     }
 
+#if ENABLE_FACEID_MODULE_MODE
+#if ENABLE_CDC_COMMUNICATION
+    ret = HAL_Dev_CdcComm_Register();
+    if (ret != 0)
+    {
+        LOGE("HAL_Dev_CdcComm_Register error %d", ret);
+        return ret;
+    }
+#elif ENABLE_UART_COMMUNICATION
+    /*Use LPUART12 for communication, which is also for debug console on VIZN3 board.
+     * So need to disable debug first. */
+    ret = HAL_Dev_UartComm_Register();
+    if (ret != 0)
+    {
+        LOGE("HAL_Dev_UartComm_Register error %d", ret);
+        return ret;
+    }
+#endif
+#endif
+
     ret = HAL_OutputDev_MqsAudio_Register();
     if (ret != 0)
     {

@@ -301,7 +301,7 @@ static int HAL_InputDev_BleWuartQn9090_Respond(uint32_t eventId,
 
             s_BLEWUARTEvent.remoteReg.regData      = NULL;
             s_BLEWUARTEvent.remoteReg.dataLen      = 0;
-            s_BLEWUARTEvent.remoteReg.isReRegister = -1;
+            s_BLEWUARTEvent.remoteReg.flag         = -1;
         }
         break;
 
@@ -536,11 +536,11 @@ static hal_ble_wuart_status_t SLN_BLEWUARTParseData(uint8_t *dataBuf, hal_header
 
             if (pHtUnit->reserved == 0)
             {
-                s_BLEWUARTEvent.remoteReg.isReRegister = 0;
+                s_BLEWUARTEvent.remoteReg.flag = 0;
             }
             else
             {
-                s_BLEWUARTEvent.remoteReg.isReRegister = 1;
+                s_BLEWUARTEvent.remoteReg.flag = 1;
             }
 
             s_BLEWUARTEvent.remoteReg.dataLen = pHtUnit->pktLen;
@@ -677,7 +677,14 @@ static hal_ble_wuart_status_t SLN_BLEWUARTParseData(uint8_t *dataBuf, hal_header
 
         case GET_APP_TYPE_REQ:
         {
-            SLN_BLEWUARTSendPacket(NULL, 0, GET_APP_TYPE_RES, pHtUnit->pktId, HAL_OutputDev_SmartLockConfig_GetMode());
+            uint32_t type;
+#if defined(SMART_LOCK_2D) || defined(SMART_LOCK_3D)
+            type = 0;
+#else
+            type = 1;
+#endif
+            SLN_BLEWUARTSendPacket(NULL, 0, GET_APP_TYPE_RES, pHtUnit->pktId, type);
+            // SLN_BLEWUARTSendPacket(NULL, 0, GET_APP_TYPE_RES, pHtUnit->pktId, HAL_OutputDev_SmartLockConfig_GetMode());
         }
         break;
 
@@ -863,7 +870,7 @@ static hal_input_status_t HAL_InputDev_BleWuartQn9090_Init(input_dev_t *dev, inp
 
     BOARD_InitBleQn9090Resource();
 
-    NVIC_SetPriority(LPUART8_IRQn, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
+    NVIC_SetPriority(LPUART8_IRQn, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1);
     if (kStatus_Success != LPUART_RTOS_Init(&s_LpuartRTOSHandle, &s_LpuartHandle, &config))
     {
         vTaskSuspend(NULL);

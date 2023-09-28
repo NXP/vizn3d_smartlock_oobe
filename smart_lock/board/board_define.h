@@ -50,6 +50,20 @@
 #endif
 
 /*
+ * FaceID module mode with uart/cdc communication definition
+ */
+#define ENABLE_FACEID_MODULE_MODE  0
+
+#define BOARD_COMM_UART_BASEADDR   LPUART12
+#define BOARD_COMM_UART_IRQ        LPUART12_IRQn
+#define BOARD_COMM_UART_CLOCK_ROOT kCLOCK_Root_Lpuart12
+
+#if ENABLE_FACEID_MODULE_MODE
+#define ENABLE_CDC_COMMUNICATION   1
+#define ENABLE_UART_COMMUNICATION  0
+#endif
+
+/*
  * Debug console definition
  */
 #define DEBUG_CONSOLE_UART_INDEX 12

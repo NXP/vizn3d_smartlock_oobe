@@ -18,12 +18,21 @@
 #define _HAL_SLN_FACE_DB_H_
 
 #include <stdbool.h>
+#include "sln_flash_config.h"
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
 #define INVALID_ID        0xFFFF
+#if FLASH_SIZE < 0x1000000U
 #define MAX_FACE_DB_SIZE  (100U)
+#elif FLASH_SIZE < 0x2000000U
+/* 16MB <= FLASH_SIZE < 32MB */
+#define MAX_FACE_DB_SIZE  (200U)
+#else
+#define MAX_FACE_DB_SIZE  (3000U)
+#endif
+
 #define FACE_NAME_MAX_LEN (31U)
 
 #ifndef AUTOSAVE

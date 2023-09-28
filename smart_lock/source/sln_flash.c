@@ -31,25 +31,12 @@ size_t safe_strlen(const char *ptr, size_t max)
 
 void SLN_ram_memset(void *dst, uint8_t data, size_t len)
 {
-    uint8_t *ptr = (uint8_t *)dst;
-
-    while (len)
-    {
-        *ptr++ = data;
-        len--;
-    }
+    memset(dst,data,len);
 }
 
 void SLN_ram_memcpy(void *dst, void *src, size_t len)
 {
-    uint8_t *ptrDst = (uint8_t *)dst;
-    uint8_t *ptrSrc = (uint8_t *)src;
-
-    while (len)
-    {
-        *ptrDst++ = *ptrSrc++;
-        len--;
-    }
+    memcpy(dst,src,len);
 }
 
 uint32_t SLN_ram_disable_irq(void)

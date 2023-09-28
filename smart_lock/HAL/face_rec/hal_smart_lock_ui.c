@@ -194,7 +194,7 @@ const static char *s_uiStrResources[] = {
 const static char *s_uiStrResources[] = {
     {"Smart Lock"},              // kUIStrID_Smartlock
     {"Access 2D"},               // kUIStrID_Access2D
-    {"Registered Users:%d"},     // kUIStrID_RegisteredUsers
+    {"Registered:%d"},           // kUIStrID_RegisteredUsers
     {"Recognition Successful"},  // kUIStrID_RecognitionSuccessful
     {"Recognition Failed"},      // kUIStrID_RecognitionFailed
     {"Fake Face!"},              // kUIStrID_Fakeface
@@ -462,6 +462,7 @@ static void ui_drawDebugWindow(oasis_lite_debug_t debugInfo)
     textColor = debugInfo.isBlurry ? RGB565_RED : RGB565_GREEN;
     gfx_drawText(&s_UiSurface, UI_MAINWINDOW_DEBUG_X, UI_MAINWINDOW_DEBUG_Y + debugRow, textColor, 0x0,
                  (int)kFont_OpenSans8, txt);
+#if defined(SMART_LOCK_3D)
     debugRow += 15;
     memset(txt, 0, sizeof(txt));
     sprintf(txt, "3d_fake: %d", debugInfo.is3dFake);
@@ -474,6 +475,26 @@ static void ui_drawDebugWindow(oasis_lite_debug_t debugInfo)
     textColor = debugInfo.is2dFake ? RGB565_RED : RGB565_GREEN;
     gfx_drawText(&s_UiSurface, UI_MAINWINDOW_DEBUG_X, UI_MAINWINDOW_DEBUG_Y + debugRow, textColor, 0x0,
                  (int)kFont_OpenSans8, txt);
+#elif defined(SMART_LOCK_2D) || defined(SMART_ACCESS_2D)
+    debugRow += 15;
+    memset(txt, 0, sizeof(txt));
+    sprintf(txt, "rgb_fake: %d", debugInfo.rgbFake);
+    textColor = debugInfo.rgbFake ? RGB565_RED : RGB565_GREEN;
+    gfx_drawText(&s_UiSurface, UI_MAINWINDOW_DEBUG_X, UI_MAINWINDOW_DEBUG_Y + debugRow, textColor, 0x0,
+                 (int)kFont_OpenSans8, txt);
+    debugRow += 15;
+    memset(txt, 0, sizeof(txt));
+    sprintf(txt, "ir_fake: %d", debugInfo.irFake);
+    textColor = debugInfo.irFake ? RGB565_RED : RGB565_GREEN;
+    gfx_drawText(&s_UiSurface, UI_MAINWINDOW_DEBUG_X, UI_MAINWINDOW_DEBUG_Y + debugRow, textColor, 0x0,
+                 (int)kFont_OpenSans8, txt);
+    debugRow += 15;
+    memset(txt, 0, sizeof(txt));
+    sprintf(txt, "ir_3d_fake: %d", debugInfo.ir3dFake);
+    textColor = debugInfo.ir3dFake ? RGB565_RED : RGB565_GREEN;
+    gfx_drawText(&s_UiSurface, UI_MAINWINDOW_DEBUG_X, UI_MAINWINDOW_DEBUG_Y + debugRow, textColor, 0x0,
+                 (int)kFont_OpenSans8, txt);
+#endif
     debugRow += 15;
     memset(txt, 0, sizeof(txt));
 	char* hint[OASISLT_FACE_ORIENTATION_NUM + 1] =

@@ -68,7 +68,7 @@
 									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
 									<listOptionValue builtIn="false" value="FWK_SUPPORT_STATIC_ALLOCATION=1"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MAJOR=1"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=3"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=4"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=0"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_3D"/>
 									<listOptionValue builtIn="false" value="HEADLESS_ENABLE=0"/>
@@ -241,7 +241,7 @@
 									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
 									<listOptionValue builtIn="false" value="FWK_SUPPORT_STATIC_ALLOCATION=1"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MAJOR=1"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=3"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=4"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=0"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_3D"/>
 									<listOptionValue builtIn="false" value="HEADLESS_ENABLE=0"/>
@@ -405,7 +405,7 @@
 							<tool id="com.crt.advproject.link.cpp.exe.debug.1585486979" name="MCU C++ Linker" superClass="com.crt.advproject.link.cpp.exe.debug">
 								<option id="com.crt.advproject.link.cpp.thumb.325213734" name="Thumb mode" superClass="com.crt.advproject.link.cpp.thumb" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.crt.advproject.link.memory.load.image.cpp.683284846" name="Plain load image" superClass="com.crt.advproject.link.memory.load.image.cpp" useByScannerDiscovery="false" value="false;" valueType="string"/>
-								<option defaultValue="com.crt.advproject.heapAndStack.mcuXpressoStyle.cpp" id="com.crt.advproject.link.memory.heapAndStack.style.cpp.203184782" name="Heap and Stack placement" superClass="com.crt.advproject.link.memory.heapAndStack.style.cpp" useByScannerDiscovery="false" valueType="enumerated"/>
+								<option defaultValue="com.crt.advproject.heapAndStack.mcuXpressoStyle.cpp" id="com.crt.advproject.link.memory.heapAndStack.style.cpp.203184782" name="Heap and Stack placement" superClass="com.crt.advproject.link.memory.heapAndStack.style.cpp" useByScannerDiscovery="false" value="Default" valueType="enumerated"/>
 								<option id="com.crt.advproject.link.memory.heapAndStack.cpp.513088955" name="Heap and Stack options" superClass="com.crt.advproject.link.memory.heapAndStack.cpp" useByScannerDiscovery="false" value="&amp;Heap:SRAM_DTC_cm7;End;0x2000&amp;Stack:SRAM_DTC_cm7;End;Default" valueType="string"/>
 								<option id="com.crt.advproject.link.memory.data.cpp.1717948232" name="Global data placement" superClass="com.crt.advproject.link.memory.data.cpp" useByScannerDiscovery="false" value="Default" valueType="string"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.crt.advproject.link.memory.sections.cpp.1489763582" name="Extra linker script input sections" superClass="com.crt.advproject.link.memory.sections.cpp" useByScannerDiscovery="false" valueType="stringList">
@@ -427,17 +427,13 @@
 								<option id="gnu.cpp.link.option.strip.1119868059" name="Omit all symbol information (-s)" superClass="gnu.cpp.link.option.strip" useByScannerDiscovery="false"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.libs.1830110276" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="odepth"/>
-									<listOptionValue builtIn="false" value="oasis_lite3D_DEFAULT_117f_ae"/>
+									<listOptionValue builtIn="false" value="oasis_lite3D_ELOCK_117f_ae"/>
 									<listOptionValue builtIn="false" value="openh264_m7"/>
-									<listOptionValue builtIn="false" value="FaceRecRtInfo_m7"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="sln_framework"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.paths.696166320" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libs/orbbec}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libs/openh264}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libs/oasis}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libs/FaceRecRtInfo}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/framework/build/release/rt117f/}&quot;"/>
 								</option>
 								<option id="gnu.cpp.link.option.flags.358144461" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.other.1818008226" name="Other options (-Xlinker [option])" superClass="gnu.cpp.link.option.other" useByScannerDiscovery="false" valueType="stringList">
@@ -885,7 +881,7 @@
 									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
 									<listOptionValue builtIn="false" value="FWK_SUPPORT_STATIC_ALLOCATION=1"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MAJOR=1"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=3"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=4"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=0"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_3D"/>
 									<listOptionValue builtIn="false" value="HEADLESS_ENABLE=0"/>
@@ -1067,7 +1063,7 @@
 									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
 									<listOptionValue builtIn="false" value="FWK_SUPPORT_STATIC_ALLOCATION=1"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MAJOR=1"/>
-									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=3"/>
+									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_MINOR=4"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_VERSION_HOTFIX=0"/>
 									<listOptionValue builtIn="false" value="SMART_LOCK_3D"/>
 									<listOptionValue builtIn="false" value="HEADLESS_ENABLE=0"/>
@@ -1243,16 +1239,14 @@
 								<option id="gnu.cpp.link.option.strip.1572333328" name="Omit all symbol information (-s)" superClass="gnu.cpp.link.option.strip" useByScannerDiscovery="false"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.libs.1728611206" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="odepth"/>
-									<listOptionValue builtIn="false" value="oasis_lite3D_DEFAULT_117f_ae"/>
+									<listOptionValue builtIn="false" value="oasis_lite3D_ELOCK_117f_ae"/>
 									<listOptionValue builtIn="false" value="openh264_m7"/>
-									<listOptionValue builtIn="false" value="FaceRecRtInfo_m7"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="sln_framework"/>
+									<listOptionValue builtIn="false" value="sln_framework"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.paths.1382414220" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libs/orbbec}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libs/oasis}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libs/openh264}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/libs/FaceRecRtInfo}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/framework/build/release/rt117f/}&quot;"/>
 								</option>
 								<option id="gnu.cpp.link.option.flags.1940470949" name="Linker flags" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false"/>
@@ -1607,28 +1601,40 @@
 		<project id="sln_vizn3d_iot_smart_lock.null.958627277" name="sln_vizn3d_iot_smart_lock" projectType="com.crt.advproject.projecttype.exe"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="com.nxp.mcuxpresso.core.datamodels">
+		<sdkName>SDK_2.x_MIMXRT1170-EVK</sdkName>
+		<sdkVersion>2.9.1</sdkVersion>
+		<sdkComponents>middleware.freertos-kernel.MIMXRT1176;middleware.freertos-kernel.extension.MIMXRT1176;middleware.freertos-kernel.template.MIMXRT1176;platform.drivers.common.MIMXRT1176;platform.drivers.clock.MIMXRT1176;platform.drivers.anatop_ai.MIMXRT1176;platform.drivers.anatop.MIMXRT1176;platform.devices.MIMXRT1176_CMSIS.MIMXRT1176;platform.drivers.lpuart.MIMXRT1176;platform.drivers.igpio.MIMXRT1176;platform.drivers.iomuxc.MIMXRT1176;platform.drivers.xip_device.MIMXRT1176;platform.drivers.pmu_1.MIMXRT1176;platform.drivers.dcdc_soc.MIMXRT1176;utility.debug_console.MIMXRT1176;component.serial_manager.MIMXRT1176;component.lists.MIMXRT1176;component.serial_manager_uart.MIMXRT1176;component.lpuart_adapter.MIMXRT1176;platform.drivers.xip_board.MIMXRT1176;platform.devices.MIMXRT1176_startup.MIMXRT1176;platform.Include_common.MIMXRT1176;platform.Include_core_cm7.MIMXRT1176;platform.Include_dsp.MIMXRT1176;</sdkComponents>
+		<boardId>evkmimxrt1170</boardId>
+		<package>MIMXRT1176DVMAA</package>
+		<core>cm7</core>
+		<coreId>cm7_MIMXRT1176xxxxx</coreId>
+	</storageModule>
 	<storageModule moduleId="com.crt.config">
 		<projectStorage>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&#13;
 &lt;TargetConfig&gt;&#13;
-&lt;Properties property_3="NXP" property_4="MIMXRT117Hxxxxx" property_count="5" version="100300"/&gt;&#13;
+&lt;Properties property_3="NXP" property_4="MIMXRT1176xxxxx" property_count="5" version="100300"/&gt;&#13;
 &lt;infoList vendor="NXP"&gt;&#13;
-&lt;info chip="MIMXRT117Hxxxxx" name="MIMXRT117Hxxxxx"&gt;&#13;
+&lt;info chip="MIMXRT1176xxxxx" name="MIMXRT1176xxxxx"&gt;&#13;
 &lt;chip&gt;&#13;
-&lt;name&gt;MIMXRT117Hxxxxx&lt;/name&gt;&#13;
+&lt;name&gt;MIMXRT1176xxxxx&lt;/name&gt;&#13;
 &lt;family&gt;MIMXRT1170&lt;/family&gt;&#13;
 &lt;vendor&gt;NXP&lt;/vendor&gt;&#13;
 &lt;memory can_program="true" id="Flash" is_ro="true" size="0" type="Flash"/&gt;&#13;
 &lt;memory id="RAM" size="2048" type="RAM"/&gt;&#13;
 &lt;memoryInstance derived_from="Flash" driver="MIMXRT1170_SFDP_QSPI.cfx" edited="true" id="BOARD_FLASH" location="0x30100000" size="0x680000"/&gt;&#13;
-&lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM" location="0x80000000" size="0x1400000"/&gt;&#13;
+&lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM" location="0x80000000" size="0x1b00000"/&gt;&#13;
 &lt;memoryInstance derived_from="RAM" edited="true" id="SRAM_DTC_cm7" location="0x20000000" size="0x38000"/&gt;&#13;
 &lt;memoryInstance derived_from="RAM" edited="true" id="SRAM_ITC_cm7" location="0x0" size="0x48000"/&gt;&#13;
-&lt;memoryInstance derived_from="RAM" edited="true" id="NCACHE_REGION" location="0x81400000" size="0x300000"/&gt;&#13;
-&lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM_H264_CLIP" location="0x81700000" size="0x100000"/&gt;&#13;
+&lt;memoryInstance derived_from="RAM" edited="true" id="NCACHE_REGION" location="0x81b00000" size="0x400000"/&gt;&#13;
+&lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM_H264_CLIP" location="0x81f00000" size="0x100000"/&gt;&#13;
 &lt;memoryInstance derived_from="RAM" edited="true" id="SRAM_OCRAM_CACHED" location="0x20240000" size="0x100000"/&gt;&#13;
 &lt;memoryInstance derived_from="RAM" edited="true" id="SRAM_OCRAM_NCACHED" location="0x20340000" size="0x40000"/&gt;&#13;
-&lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM_RT_INFO" location="0x81800000" size="0x800000"/&gt;&#13;
 &lt;/chip&gt;&#13;
+&lt;processor&gt;&#13;
+&lt;name gcc_name="cortex-m4"&gt;Cortex-M4&lt;/name&gt;&#13;
+&lt;family&gt;Cortex-M&lt;/family&gt;&#13;
+&lt;/processor&gt;&#13;
 &lt;processor&gt;&#13;
 &lt;name gcc_name="cortex-m7"&gt;Cortex-M7&lt;/name&gt;&#13;
 &lt;family&gt;Cortex-M&lt;/family&gt;&#13;
@@ -1636,6 +1642,14 @@
 &lt;/info&gt;&#13;
 &lt;/infoList&gt;&#13;
 &lt;/TargetConfig&gt;</projectStorage>
+	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/smart_lock"/>
+		</configuration>
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/smart_lock"/>
+		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
@@ -1659,22 +1673,5 @@
 		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1395496206;com.crt.advproject.config.exe.debug.1395496206.;com.crt.advproject.gas.exe.debug.281337963;com.crt.advproject.assembler.input.2013444415">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
-	</storageModule>
-	<storageModule moduleId="com.nxp.mcuxpresso.core.datamodels">
-		<sdkName>SDK_2.x_SLN-VIZN3D-IOT</sdkName>
-		<sdkVersion>2.9.1</sdkVersion>
-		<sdkComponents>middleware.freertos-kernel.MIMXRT1176;middleware.freertos-kernel.extension.MIMXRT1176;middleware.freertos-kernel.template.MIMXRT1176;platform.drivers.common.MIMXRT1176;platform.drivers.clock.MIMXRT1176;platform.drivers.anatop_ai.MIMXRT1176;platform.drivers.anatop.MIMXRT1176;platform.devices.MIMXRT1176_CMSIS.MIMXRT1176;platform.drivers.lpuart.MIMXRT1176;platform.drivers.igpio.MIMXRT1176;platform.drivers.iomuxc.MIMXRT1176;platform.drivers.xip_device.MIMXRT1176;platform.drivers.pmu_1.MIMXRT1176;platform.drivers.dcdc_soc.MIMXRT1176;utility.debug_console.MIMXRT1176;component.serial_manager.MIMXRT1176;component.lists.MIMXRT1176;component.serial_manager_uart.MIMXRT1176;component.lpuart_adapter.MIMXRT1176;platform.drivers.xip_board.MIMXRT1176;platform.devices.MIMXRT1176_startup.MIMXRT1176;platform.Include_common.MIMXRT1176;platform.Include_core_cm7.MIMXRT1176;platform.Include_dsp.MIMXRT1176;</sdkComponents>
-		<boardId>sln_vizn3d_iot</boardId>
-		<package>MIMXRT117HDVMAA</package>
-		<core>cm7</core>
-		<coreId>cm7_MIMXRT117Hxxxxx</coreId>
-	</storageModule>
-	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="Debug">
-			<resource resourceType="PROJECT" workspacePath="/sln_vizn3d_iot_smart_lock"/>
-		</configuration>
-		<configuration configurationName="Release">
-			<resource resourceType="PROJECT" workspacePath="/sln_vizn3d_iot_smart_lock"/>
-		</configuration>
 	</storageModule>
 </cproject>

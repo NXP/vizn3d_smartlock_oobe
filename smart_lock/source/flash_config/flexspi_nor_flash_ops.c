@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016, Freescale Semiconductor, Inc.
- * Copyright 2016-2019, 2021 NXP
+ * Copyright 2016-2019, 2021-2022 NXP
  * All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -221,7 +221,7 @@ status_t flexspi_nor_flash_page_program(FLEXSPI_Type *base, uint32_t dstAddr, co
     flashXfer.port          = kFLEXSPI_PortA1;
     flashXfer.cmdType       = kFLEXSPI_Write;
     flashXfer.SeqNumber     = 1;
-    flashXfer.seqIndex      = NOR_CMD_LUT_SEQ_IDX_PAGEPROGRAM_QUAD;
+    flashXfer.seqIndex      = NOR_CMD_LUT_SEQ_IDX_PAGEPROGRAM;
     flashXfer.data          = (uint32_t *)src;
     flashXfer.dataSize      = FLASH_PAGE_SIZE;
     status                  = FLEXSPI_TransferBlocking(base, &flashXfer);
@@ -261,6 +261,27 @@ status_t flexspi_nor_get_vendor_id(FLEXSPI_Type *base, uint8_t *vendorId)
     return status;
 }
 
+status_t flexspi_nor_4bytes_mode_enable(FLEXSPI_Type *base)
+{
+    status_t status;
+    flexspi_transfer_t flashXfer;
+
+    // id command : NOR_CMD_LUT_SEQ_IDX_ENTERQPI
+    flashXfer.deviceAddress = 0;
+    flashXfer.port          = kFLEXSPI_PortA1;
+    flashXfer.cmdType       = kFLEXSPI_Command;
+    flashXfer.SeqNumber     = 1;
+    flashXfer.seqIndex      = NOR_CMD_LUT_SEQ_IDX_ENTER4BADDRESS;
+
+    status = FLEXSPI_TransferBlocking(base, &flashXfer);
+
+    if (status != kStatus_Success)
+    {
+        return status;
+    }
+    return status;
+}
+
 status_t flexspi_nor_flash_init(FLEXSPI_Type *base)
 {
     flexspi_config_t config;
@@ -278,12 +299,10 @@ status_t flexspi_nor_flash_init(FLEXSPI_Type *base)
     FLEXSPI_SetFlashConfig(base, &deviceconfig, kFLEXSPI_PortA1);
 
     /* Update LUT table. */
-    FLEXSPI_UpdateLUT(FLEXSPI, 0, customLUT, CUSTOM_LUT_LENGTH);
-
-    /* Enter quad mode. */
-    status = flexspi_nor_enable_quad_mode(base);
+    FLEXSPI_UpdateLUT(base, 0, customLUT, CUSTOM_LUT_LENGTH);
 
     /* Do software reset. */
     FLEXSPI_SoftwareReset(base);
+
     return status;
 }
