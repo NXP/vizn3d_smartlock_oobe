@@ -158,6 +158,11 @@ int HAL_DisplayDev_Lpuart3D_Register();
 int HAL_DisplayDev_Lpuart2D_Register();
 #endif
 
+#if ENABLE_FACEID_MODULE_MODE
+int HAL_Dev_UartComm_Register();
+int HAL_Dev_CdcComm_Register();
+#endif
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */

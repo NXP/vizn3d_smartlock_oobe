@@ -118,11 +118,11 @@ const static input_dev_operator_t s_InputDev_ShellUsbOps = {
 static input_dev_t s_InputDev_ShellUsb = {
     .id = 1, .name = SHELL_NAME, .ops = &s_InputDev_ShellUsbOps, .cap = {.callback = NULL}};
 
-serial_manager_status_t Serial_UsbCdcInit(serial_handle_t serialHandle, void *serialConfig)
-{
-    *(uint32_t *)serialHandle = (uint32_t)&s_UsbDeviceCDC;
-    return kStatus_SerialManager_Success;
-}
+//serial_manager_status_t Serial_UsbCdcInit(serial_handle_t serialHandle, void *serialConfig)
+//{
+//    *(uint32_t *)serialHandle = (uint32_t)&s_UsbDeviceCDC;
+//    return kStatus_SerialManager_Success;
+//}
 
 static usb_status_t USB_DeviceCdcVcomCallback(class_handle_t handle, uint32_t event, void *param)
 {
@@ -518,6 +518,7 @@ static hal_input_status_t HAL_InputDev_ShellUsb_Init(input_dev_t *dev, input_dev
     s_USBShellHandle                          = &s_USBShellHandleBuffer[0];
     serial_port_usb_cdc_config_t usbCdcConfig = {
         .controllerIndex = (serial_port_usb_cdc_controller_index_t)CONTROLLER_ID,
+        .cdcVcom = &s_UsbDeviceCDC,
     };
     serial_manager_config_t config;
     memset(&config, 0, sizeof(serial_manager_config_t));

@@ -27,6 +27,7 @@
 
 #include "fwk_log.h"
 #include "fwk_camera_manager.h"
+#include "hal_event_descriptor_common.h"
 #include "hal_camera_dev.h"
 
 #define CAMERA_NAME "CSI_GC0308"
@@ -104,14 +105,7 @@ static void HAL_CameraDev_CsiGc0308_ReceiverCallback(camera_receiver_handle_t *h
     }
 }
 
-hal_camera_status_t HAL_CameraDev_CsiGc0308_InputNotify(const camera_dev_t *dev, void *data)
-{
-    hal_camera_status_t ret = kStatus_HAL_CameraSuccess;
-
-    return ret;
-}
-
-hal_camera_status_t HAL_CameraDev_CsiGc0308_Init(camera_dev_t *dev, int width, int height, camera_dev_callback_t callback, void *param)
+static hal_camera_status_t HAL_CameraDev_CsiGc0308_Init(camera_dev_t *dev, int width, int height, camera_dev_callback_t callback, void *param)
 {
     hal_camera_status_t ret = kStatus_HAL_CameraSuccess;
     camera_config_t cameraConfig;
@@ -158,13 +152,13 @@ hal_camera_status_t HAL_CameraDev_CsiGc0308_Init(camera_dev_t *dev, int width, i
     return ret;
 }
 
-hal_camera_status_t HAL_CameraDev_CsiGc0308_Deinit(camera_dev_t *dev)
+static hal_camera_status_t HAL_CameraDev_CsiGc0308_Deinit(camera_dev_t *dev)
 {
     hal_camera_status_t ret = kStatus_HAL_CameraSuccess;
     return ret;
 }
 
-hal_camera_status_t HAL_CameraDev_CsiGc0308_Start(const camera_dev_t *dev)
+static hal_camera_status_t HAL_CameraDev_CsiGc0308_Start(const camera_dev_t *dev)
 {
     hal_camera_status_t ret = kStatus_HAL_CameraSuccess;
     LOGD("camera_dev_csi_gc0308_start");
@@ -174,7 +168,7 @@ hal_camera_status_t HAL_CameraDev_CsiGc0308_Start(const camera_dev_t *dev)
     return ret;
 }
 
-hal_camera_status_t HAL_CameraDev_CsiGc0308_Enqueue(const camera_dev_t *dev, void *data)
+static hal_camera_status_t HAL_CameraDev_CsiGc0308_Enqueue(const camera_dev_t *dev, void *data)
 {
     LOGI("++s_CameraDev_CsiGC0308_enqueue");
 
@@ -190,7 +184,7 @@ hal_camera_status_t HAL_CameraDev_CsiGc0308_Enqueue(const camera_dev_t *dev, voi
     return ret;
 }
 
-hal_camera_status_t HAL_CameraDev_CsiGc0308_Dequeue(const camera_dev_t *dev, void **data, pixel_format_t *format)
+static hal_camera_status_t HAL_CameraDev_CsiGc0308_Dequeue(const camera_dev_t *dev, void **data, pixel_format_t *format)
 {
     LOGI("++s_CameraDev_CsiGC0308_dequeue");
 
@@ -203,6 +197,38 @@ hal_camera_status_t HAL_CameraDev_CsiGc0308_Dequeue(const camera_dev_t *dev, voi
     *data   = s_pCurrentFrameBuffer;
     *format = csi_gc0308_format;
     LOGI("--s_CameraDev_CsiGC0308_dequeue");
+    return ret;
+}
+
+static hal_camera_status_t HAL_CameraDev_CsiGc0308_InputNotify(const camera_dev_t *dev, void *data)
+{
+    LOGI("++HAL_CameraDev_CsiGc0308_InputNotify");
+
+    hal_camera_status_t ret              = 0;
+    event_base_t eventBase = *(event_base_t *)data;
+    switch (eventBase.eventId)
+    {
+        case kEventID_ControlIRCamExposure:
+        {
+            event_common_t* pevent = (event_common_t *)data;
+            if (pevent->brightnessControl.enable)
+            {
+                CAMERA_DEVICE_Control(&cameraDevice,
+                                      kCAMERA_DeviceBrightnessAdjust,
+                                      (pevent->brightnessControl.direction == 0)?CAMERA_BRIGHTNESS_DECREASE:CAMERA_BRIGHTNESS_INCREASE);
+            }
+            else
+            {
+                //CAMERA_DEVICE_Control(&cameraDevice, kCAMERA_DeviceBrightnessAdjust, CAMERA_BRIGHTNESS_DEFAULT);
+                CAMERA_DEVICE_Control(&cameraDevice, kCAMERA_DeviceExposureMode, CAMERA_EXPOSURE_MODE_AUTO);
+            }
+        }
+        break;
+
+        default:
+            break;
+    }
+    LOGI("--HAL_CameraDev_CsiGc0308_InputNotify");
     return ret;
 }
 

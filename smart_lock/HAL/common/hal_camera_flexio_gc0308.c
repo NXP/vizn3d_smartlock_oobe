@@ -310,34 +310,7 @@ static hal_camera_status_t HAL_CameraDev_FlexioGc0308_Dequeue(const camera_dev_t
     return ret;
 }
 
-static uint8_t HAL_CameraDev_GetTargetExposureMode(uint8_t curMode, uint8_t direction)
-{
-    uint8_t mode;
-    uint8_t modeMin      = CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
-    uint8_t modeMax      = CAMERA_EXPOSURE_MODE_AUTO_LEVEL3;
-    uint8_t modeInterval = 1;
-    if (direction)
-    {
-        mode = curMode + modeInterval;
-        if (mode >= modeMax)
-            mode = modeMax;
-    }
-    else
-    {
-        if (curMode <= (modeInterval + modeMin))
-        {
-            mode = modeMin;
-        }
-        else
-        {
-            mode = curMode - modeInterval;
-        }
-    }
-    LOGI("Camera exposure [curMode:%d][targetMode:%d]", curMode, mode);
-    return mode;
-}
-
-static int HAL_CameraDev_FlexioGc0308_Notify(const camera_dev_t *dev, void *data)
+static hal_camera_status_t HAL_CameraDev_FlexioGc0308_Notify(const camera_dev_t *dev, void *data)
 {
     LOGI("++HAL_CameraDev_FlexioGc0308_Notify");
 
@@ -347,23 +320,17 @@ static int HAL_CameraDev_FlexioGc0308_Notify(const camera_dev_t *dev, void *data
     {
         case kEventID_ControlRGBCamExposure:
         {
-            if (flexio_gc0308_format == kPixelFormat_UYVY1P422_RGB)
+            event_common_t* pevent = (event_common_t *)data;
+            if (pevent->brightnessControl.enable)
             {
-                event_common_t event = *(event_common_t *)data;
-                uint8_t mode;
-                if (event.brightnessControl.enable == true)
-                {
-                    mode = HAL_CameraDev_GetTargetExposureMode(s_CurRGBExposureMode, event.brightnessControl.direction);
-                }
-                else
-                {
-                    mode = CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
-                }
-                if (mode != s_CurRGBExposureMode)
-                {
-                    CAMERA_DEVICE_Control(&s_CameraDevice, kCAMERA_DeviceExposureMode, (int32_t)mode);
-                    s_CurRGBExposureMode = mode;
-                }
+                CAMERA_DEVICE_Control(&s_CameraDevice,
+                                      kCAMERA_DeviceBrightnessAdjust,
+                                      (pevent->brightnessControl.direction == 0)?CAMERA_BRIGHTNESS_DECREASE:CAMERA_BRIGHTNESS_INCREASE);
+            }
+            else
+            {
+                //CAMERA_DEVICE_Control(&s_CameraDevice, kCAMERA_DeviceBrightnessAdjust, CAMERA_BRIGHTNESS_DEFAULT);
+                CAMERA_DEVICE_Control(&s_CameraDevice, kCAMERA_DeviceExposureMode, CAMERA_EXPOSURE_MODE_AUTO);
             }
         }
         break;

@@ -111,11 +111,12 @@ typedef struct _brightness_control_event
 {
     uint8_t enable;    /* enable (false-true) */
     uint8_t direction; /* direction (0-1) */
-    uint8_t type;      /* faceAE(0) or globleAE(1) */
+    uint8_t type;      /* faceAE(0) or globleAE(1) or LedBrightness (2) or camGain(3) */
     union
     {
         uint16_t faceRect[4]; /* left, top, right, bottom */
         uint8_t globalAE;
+        uint8_t ledPwm;  /* 0 ~ 100. If ledPwm > 100, use the default pwm saved in flash */
     };
 } brightness_control_event_t;
 

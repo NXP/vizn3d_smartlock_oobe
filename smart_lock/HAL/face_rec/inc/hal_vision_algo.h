@@ -71,6 +71,7 @@ typedef enum _oasis_lite_mode
 
 typedef enum _oasis_lite_state
 {
+    kOASISLiteState_Invalid = -1,
     kOASISLiteState_Recognition,
     kOASISLiteState_Registration,
     kOASISLiteState_DeRegistration,
@@ -84,6 +85,7 @@ typedef enum _oasis_lite_recognition_result
     kOASISLiteRecognitionResult_Success,
     kOASISLiteRecognitionResult_Unknown,
     kOASISLiteRecognitionResult_Timeout,
+    kOASISLiteRecognitionResult_Cancelled,
     kOASISLiteRecognitionResult_Count
 } oasis_lite_recognition_result_t;
 
@@ -93,6 +95,7 @@ typedef enum _oasis_lite_registration_result
     kOASISLiteRegistrationResult_Success,
     kOASISLiteRegistrationResult_Duplicated,
     kOASISLiteRegistrationResult_Timeout,
+    kOASISLiteRegistrationResult_Cancelled,
     kOASISLiteRegistrationResult_Count
 } oasis_lite_registration_result_t;
 
@@ -101,15 +104,18 @@ typedef enum _oasis_lite_deregistration_result
     kOASISLiteDeregistrationResult_Invalid,
     kOASISLiteDeregistrationResult_Success,
     kOASISLiteDeregistrationResult_Timeout,
+    kOASISLiteDeregistrationResult_Cancelled,
     kOASISLiteDeregistrationResult_Count
 } oasis_lite_deregistration_result_t;
 
 typedef enum _oasis_lite_quality_check_result
 {
     kOasisLiteQualityCheck_Ok,
-    kOasisLiteQualityCheck_FakeFace,
-    kOasisLiteQualityCheck_NonFrontalFace,
+    kOasisLiteQualityCheck_SmallFace,
     kOasisLiteQualityCheck_Blurry,
+    kOasisLiteQualityCheck_SideFace,
+    kOasisLiteQualityCheck_Brightness,
+    kOasisLiteQualityCheck_FakeFace,
     kOasisLiteQualityCheck_Count
 } oasis_lite_quality_check_result_t;
 
@@ -145,9 +151,20 @@ typedef struct _oasis_lite_debug
     /* the face id with this sim value */
     uint32_t faceID;
     uint8_t isOk;
-    uint8_t is3dFake;
-    uint8_t is2dFake;
+    uint8_t isSmallFace;
     uint8_t isBlurry;
+    uint8_t isSideFace;
+    union
+    {
+        uint8_t is2dFake;
+        uint8_t rgbFake;
+    };
+    union
+    {
+        uint8_t is3dFake;
+        uint8_t irFake;
+    };
+    uint8_t ir3dFake;
     OASISLTFaceOrientation_t OriExpected;
     uint8_t hasMask;
     uint8_t hasGlasses;

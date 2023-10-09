@@ -275,13 +275,13 @@ static int _oasis_lite_Log(const char *formatString)
 
 static int Oasis_Init(int appType)
 {
-    LOGD("++Oasis_Init");
+    LOGD("++Oasis_Init = %d ", appType);
     OASISLTResult_t oasis_ret = OASISLT_OK;
 
     memset(&gOasisLite, 0, sizeof(gOasisLite));
 
     // init the oasis lite config
-    gOasisLite.config.imgType              = OASIS_IMG_TYPE_IR_RGB_DUAL;
+    gOasisLite.config.imgType              = (appType == 0) ? OASIS_IMG_TYPE_IR_RGB_DUAL : OASIS_IMG_TYPE_RGB_IR_DUAL;
     gOasisLite.config.minFace              = OASIS_DETECT_MIN_FACE;
     gOasisLite.config.cbs.EvtCb            = _oasis_lite_EvtCb;
     gOasisLite.config.cbs.GetFaces         = _oasis_lite_GetFaces;
@@ -299,6 +299,8 @@ static int Oasis_Init(int appType)
     gOasisLite.config.memPool             = NULL;
     gOasisLite.config.fastMemBuf         = NULL;
     gOasisLite.config.fastMemSize        = 0;
+    gOasisLite.config.runtimePara.brightnessTH[0] = 80;
+    gOasisLite.config.runtimePara.brightnessTH[1] = 180;
 
     gOasisLite.run_flag = OASIS_DET_REC_REG_REMOTE;
 

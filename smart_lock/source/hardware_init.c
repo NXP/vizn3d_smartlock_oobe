@@ -572,6 +572,7 @@ void BOARD_InitFlexioCameraResource(void)
 #endif
 }
 
+/* Init CSI camera pins and mclk(12MHz or 24MHz)*/
 void BOARD_InitCSICameraResource(uint32_t mclk)
 {
     BOARD_InitParallelCameraPins();
@@ -598,10 +599,12 @@ void BOARD_InitCSICameraResource(uint32_t mclk)
     {
         LOGE("Error: MCLK freq is not right, will use 24MHz in default.\r\n");
     }
+
     clock_root_config_t rootCfg = {
         .mux = kCLOCK_CSI_ClockRoot_MuxOscRc48MDiv2,
         .div = 1,
     };
+
     if (mclk == 12000000U)
     {
         rootCfg.div = 2;

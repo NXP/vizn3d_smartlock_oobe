@@ -29,6 +29,15 @@
  * Code
  ******************************************************************************/
 
+#if (defined(SERIAL_PORT_TYPE_USBCDC) && (SERIAL_PORT_TYPE_USBCDC > 0U))
+serial_manager_status_t Serial_UsbCdcInit(serial_handle_t serialHandle, void *portConfig)
+{
+	serial_port_usb_cdc_config_t *cdc_config = (serial_port_usb_cdc_config_t *)portConfig;
+    *(uint32_t *)serialHandle = (uint32_t)(cdc_config->cdcVcom);
+    return kStatus_SerialManager_Success;
+}
+#endif
+
 serial_manager_status_t Serial_UsbCdcDeinit(serial_handle_t serialHandle)
 {
     serial_usb_cdc_state_t *serialUsbCdc;

@@ -41,6 +41,7 @@
 /*******************************************************************************
  * Defines
  ******************************************************************************/
+#define FEATURE_TEMPLATE_STRESS_TEST 0 
 #define OASISLOG_ENABLE 1
 #if OASISLOG_ENABLE
 #define OASIS_LOGI LOGI
@@ -61,6 +62,12 @@
 #define DETECT_FACE_TIMER   10000
 #define ENTER_SLEEP_TIMER   30000
 #define QUALITY_CHECK_TIMER 1500
+
+#if ENABLE_FACEID_MODULE_MODE
+#define FACE_REC_AUTO_START 1
+#else
+#define FACE_REC_AUTO_START 1
+#endif
 
 typedef struct _oasis_lite_param
 {
@@ -111,18 +118,18 @@ FWKDATA static uint8_t s_DTCOPBuf[DTC_OPTIMIZE_BUFFER_SIZE];
 __attribute__((section(".bss.$SRAM_OCRAM_CACHED"), aligned(64))) uint8_t g_OasisMemPool[OASIS_STATIC_MEM_POOL];
 #endif
 
-/* Runtime info REGION START ADDRESS, need to align with the definition in the MCUXpresso MCU Setting */
-extern void __base_BOARD_SDRAM_RT_INFO(void);
-extern void __top_BOARD_SDRAM_RT_INFO(void);
-
-#define RT_INFO_REGION_START ((unsigned int)__base_BOARD_SDRAM_RT_INFO)
-
-/*
- * Runtime info REGION SIZE, need to align with the definition in the MCUXpresso MCU Setting
- */
-#define RT_INFO_REGION_SIZE (((unsigned int)__top_BOARD_SDRAM_RT_INFO) - ((unsigned int)__base_BOARD_SDRAM_RT_INFO))
-
-#include "face_rec_rt_info.h"
+///* Runtime info REGION START ADDRESS, need to align with the definition in the MCUXpresso MCU Setting */
+// extern void __base_BOARD_SDRAM_RT_INFO(void);
+// extern void __top_BOARD_SDRAM_RT_INFO(void);
+//
+//#define RT_INFO_REGION_START ((unsigned int)__base_BOARD_SDRAM_RT_INFO)
+//
+///*
+// * Runtime info REGION SIZE, need to align with the definition in the MCUXpresso MCU Setting
+// */
+//#define RT_INFO_REGION_SIZE (((unsigned int)__top_BOARD_SDRAM_RT_INFO) - ((unsigned int)__base_BOARD_SDRAM_RT_INFO))
+//
+//#include "face_rec_rt_info.h"
 
 /*******************************************************************************
  * Prototypes
@@ -134,6 +141,7 @@ static void _oasis_start_recognition(oasis_lite_param_t *pParam);
 static void _set_blocker_bit(oasis_blocking_event_id_t blockerId);
 static void _clear_blocker_bit(oasis_blocking_event_id_t blockerId);
 static uint8_t _check_blocker_bit(oasis_blocking_event_id_t blockerId);
+static void _oasis_lite_reset_brightness(bool ledOn);
 
 /*******************************************************************************
  * Code
@@ -258,9 +266,10 @@ static void _oasis_lite_EvtCb(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTC
             }
             else if (para->qualityResult == OASIS_QUALITY_RESULT_FACE_ORIENTATION_UNMATCH)
             {
-                qualityCheck          = kOasisLiteQualityCheck_NonFrontalFace;
+                qualityCheck          = kOasisLiteQualityCheck_SideFace;
+				debugInfo->isSideFace = 1;
                 debugInfo->OriExpected = OASISLT_FACE_ORIENTATION_NUM;
-                OASIS_LOGD("[OASIS]Quality:face orientation unmatch!.");
+                OASIS_LOGD("[OASIS]Quality:side face!.");
             }
             else if (para->qualityResult == OASIS_QUALITY_RESULT_FACE_TOO_SMALL)
             {
@@ -345,7 +354,7 @@ static void _oasis_lite_EvtCb(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTC
                 }
                 else
                 {
-                    sprintf(result->name, "user_%03d", para->faceID);
+                    sprintf(result->name, "user_%04d", para->faceID);
                     OASIS_LOGE("ERROR:failed to get face name %d.", para->faceID);
                 }
             }
@@ -495,22 +504,30 @@ static int _oasis_lite_AddFace(uint16_t *faceId, void *faceData, SnapshotItem_t*
     int ret          = -1;
     int faceItemSize = OASISLT_getFaceItemSize();
 
-    uint16_t newFaceId;
-    status = HAL_Facedb_GenId(&newFaceId);
+#if FEATURE_TEMPLATE_STRESS_TEST
+    int times_templates = MAX_FACE_DB_SIZE;
+#else
+    int times_templates = 1;
+#endif
+    for(int ii = 0;ii<times_templates;ii++)
+    {
+        uint16_t newFaceId;
+        status = HAL_Facedb_GenId(&newFaceId);
 
-    if ((status == kFaceDBStatus_Success) && (newFaceId != INVALID_ID))
-    {
-        *faceId = newFaceId;
-        status   = HAL_Facedb_AddFace(newFaceId, s_UserNameReference, faceData, faceItemSize);
-        if (status == kFaceDBStatus_Success)
+        if ((status == kFaceDBStatus_Success) && (newFaceId != INVALID_ID))
         {
-            s_UserNameReference = NULL;
-            ret                 = 0;
+            *faceId = newFaceId;
+            status   = HAL_Facedb_AddFace(newFaceId, s_UserNameReference, faceData, faceItemSize);
+            if (status == kFaceDBStatus_Success)
+            {
+                s_UserNameReference = NULL;
+                ret                 = 0;
+            }
         }
-    }
-    else if (status == kFaceDBStatus_Full)
-    {
-        OASIS_LOGE("OASIS: database is full.");
+        else if (status == kFaceDBStatus_Full)
+        {
+            OASIS_LOGE("OASIS: database is full.");
+        }
     }
 
     OASIS_LOGI("--_oasis_lite_AddFace");
@@ -699,10 +716,15 @@ static void _oasis_start_deregistration(oasis_lite_param_t *pParam)
 
     if (pParam->run_flag == OASIS_RUN_FLAG_STOP)
     {
+#if ENABLE_FACEID_MODULE_MODE
+        _oasis_lite_reset_brightness(1);
+        _oasis_lite_dev_RequestFrame(pParam->dev);
+#else
         LOGI("Skip the start of deregistration as oasis is stopped.");
         return;
+#endif
     }
-
+    LOGD("Start DeRegistration!");
     _oasis_timers_stop();
     memset(&pParam->result, 0, sizeof(pParam->result));
     pParam->result.id              = kVisionAlgoID_OasisLite;
@@ -727,6 +749,34 @@ static void _oasis_start_deregistration(oasis_lite_param_t *pParam)
     pParam->run_flag     = OASIS_DET_REC_DEREG;
 }
 
+static void _oasis_stop_deregistration(oasis_lite_param_t *pParam)
+{
+    if (pParam == NULL)
+        return;
+
+    if (pParam->run_flag != OASIS_DET_REC_DEREG)
+    {
+        LOGD("Error state: run_flag = %d", pParam->run_flag);
+//        memset(&pParam->result, 0, sizeof(pParam->result));
+//        pParam->result.id              = kVisionAlgoID_OasisLite;
+//        pParam->result.oasisLite.state = kOASISLiteState_Invalid;
+//        _oasis_lite_dev_notify_result(pParam->dev, &(pParam->result));
+        return;
+    }
+#if ENABLE_FACEID_MODULE_MODE
+    _oasis_lite_reset_brightness(0);
+#endif
+    LOGD("Stop DeRegistration!");
+    _oasis_timers_stop();
+    s_OasisLite.prevRunFlag = OASIS_DET_REC_DEREG;
+    s_OasisLite.run_flag    = OASIS_RUN_FLAG_STOP;
+    memset(&pParam->result, 0, sizeof(pParam->result));
+    pParam->result.id                     = kVisionAlgoID_OasisLite;
+    pParam->result.oasisLite.dereg_result = kOASISLiteDeregistrationResult_Cancelled;
+    pParam->result.oasisLite.state        = kOASISLiteState_DeRegistration;
+    _oasis_lite_dev_notify_result(pParam->dev, &(pParam->result));
+}
+
 static void _oasis_start_registration(oasis_lite_param_t *pParam)
 {
     if (pParam == NULL)
@@ -734,13 +784,19 @@ static void _oasis_start_registration(oasis_lite_param_t *pParam)
 
     if (pParam->run_flag == OASIS_RUN_FLAG_STOP)
     {
+#if ENABLE_FACEID_MODULE_MODE
+        _oasis_lite_reset_brightness(1);
+        _oasis_lite_dev_RequestFrame(pParam->dev);
+#else
         LOGI("Skip the start of registration as oasis is stopped.");
         return;
+#endif
     }
-
+    LOGD("Start Registration!");
     _oasis_timers_stop();
     memset(&pParam->result, 0, sizeof(pParam->result));
     pParam->run_flag               = OASIS_DET_REC_REG;
+    pParam->prevRunFlag            = OASIS_RUN_FLAG_STOP;
     pParam->result.id              = kVisionAlgoID_OasisLite;
     pParam->result.oasisLite.state = kOASISLiteState_Registration;
 
@@ -761,6 +817,34 @@ static void _oasis_start_registration(oasis_lite_param_t *pParam)
     pParam->qualityCheck = kOasisLiteQualityCheck_Ok;
 }
 
+static void _oasis_stop_registration(oasis_lite_param_t *pParam)
+{
+    if (pParam == NULL)
+        return;
+
+    if (pParam->run_flag != OASIS_DET_REC_REG)
+    {
+        LOGD("Error state: run_flag = %d", pParam->run_flag);
+//        memset(&pParam->result, 0, sizeof(pParam->result));
+//        pParam->result.id              = kVisionAlgoID_OasisLite;
+//        pParam->result.oasisLite.state = kOASISLiteState_Invalid;
+//        _oasis_lite_dev_notify_result(pParam->dev, &(pParam->result));
+        return;
+    }
+#if ENABLE_FACEID_MODULE_MODE
+    _oasis_lite_reset_brightness(0);
+#endif
+    LOGD("Stop Registration!");
+    _oasis_timers_stop();
+    s_OasisLite.prevRunFlag = OASIS_DET_REC_REG;
+    s_OasisLite.run_flag    = OASIS_RUN_FLAG_STOP;
+    memset(&pParam->result, 0, sizeof(pParam->result));
+    pParam->result.id                   = kVisionAlgoID_OasisLite;
+    pParam->result.oasisLite.reg_result = kOASISLiteRegistrationResult_Cancelled;
+    pParam->result.oasisLite.state      = kOASISLiteState_Registration;
+    _oasis_lite_dev_notify_result(pParam->dev, &(pParam->result));
+}
+
 static void _oasis_start_recognition(oasis_lite_param_t *pParam)
 {
     if (pParam == NULL)
@@ -768,17 +852,26 @@ static void _oasis_start_recognition(oasis_lite_param_t *pParam)
 
     if (pParam->run_flag == OASIS_RUN_FLAG_STOP)
     {
+#if ENABLE_FACEID_MODULE_MODE
+        _oasis_lite_reset_brightness(1);
+        _oasis_lite_dev_RequestFrame(pParam->dev);
+#else
         LOGI("Skip the start of recognition as oasis is stopped.");
         return;
+#endif
     }
-
+    LOGD("Start Recognition!");
     _oasis_timers_stop();
-    pParam->run_flag = OASIS_DET_REC;
+    pParam->run_flag    = OASIS_DET_REC;
+    pParam->prevRunFlag = OASIS_RUN_FLAG_STOP;
     memset(&pParam->result, 0, sizeof(pParam->result));
-    pParam->result.id = kVisionAlgoID_OasisLite;
+    pParam->result.id              = kVisionAlgoID_OasisLite;
+    pParam->result.oasisLite.state = kOASISLiteState_Recognition;
     _oasis_lite_dev_notify_result(pParam->dev, &(pParam->result));
 
+#if !ENABLE_FACEID_MODULE_MODE
     if (HAL_OutputDev_SmartLockConfig_GetSleepMode() == kLPMManagerStatus_SleepEnable)
+#endif
     {
         /* start rec timer, timeout will enable low power mode. */
         if (sln_timer_start("RecTimer", RECOGNITION_TIMER, 0, _oasis_timer_rec, &s_OasisLite, &s_OasisLite.pRecTimer))
@@ -792,6 +885,34 @@ static void _oasis_start_recognition(oasis_lite_param_t *pParam)
             LOGE("Failed to start \"DetectFace\" timer.");
         }
     }
+}
+
+static void _oasis_stop_recognition(oasis_lite_param_t *pParam)
+{
+    if (pParam == NULL)
+        return;
+
+    if (pParam->run_flag != OASIS_DET_REC)
+    {
+        LOGD("Error state: run_flag = %d", pParam->run_flag);
+//        memset(&pParam->result, 0, sizeof(pParam->result));
+//        pParam->result.id              = kVisionAlgoID_OasisLite;
+//        pParam->result.oasisLite.state = kOASISLiteState_Invalid;
+//        _oasis_lite_dev_notify_result(pParam->dev, &(pParam->result));
+        return;
+    }
+#if ENABLE_FACEID_MODULE_MODE
+    _oasis_lite_reset_brightness(0);
+#endif
+    LOGD("Stop Recognition!");
+    _oasis_timers_stop();
+    s_OasisLite.run_flag    = OASIS_RUN_FLAG_STOP;
+    s_OasisLite.prevRunFlag = OASIS_DET_REC;
+    memset(&pParam->result, 0, sizeof(pParam->result));
+    pParam->result.id                   = kVisionAlgoID_OasisLite;
+    pParam->result.oasisLite.rec_result = kOASISLiteRecognitionResult_Cancelled;
+    pParam->result.oasisLite.state      = kOASISLiteState_Recognition;
+    _oasis_lite_dev_notify_result(pParam->dev, &(pParam->result));
 }
 
 static void _oasis_timer_result(void *arg)
@@ -882,6 +1003,11 @@ static void _oasis_lite_check_timeout(oasis_lite_result_t *result, uint8_t *time
     }
 }
 
+static void _oasis_lite_reset_brightness(bool ledOn)
+{
+    // TBD ---
+}
+
 static void _process_inference_result(oasis_lite_param_t *pParam)
 {
     uint8_t lock_oasis = false;
@@ -907,6 +1033,15 @@ static void _process_inference_result(oasis_lite_param_t *pParam)
                     (pResult->rec_result == kOASISLiteRecognitionResult_Timeout))
                 {
                     lock_oasis = true;
+                }
+
+                if (pParam->pRecTimer)
+                {
+                    pResult->process = (float)sln_timer_getRemainingTime(&pParam->pRecTimer) / RECOGNITION_TIMER;
+                }
+                else
+                {
+                    pResult->process = 0;
                 }
             }
         }
@@ -959,6 +1094,7 @@ static void _process_inference_result(oasis_lite_param_t *pParam)
         {
             lock_oasis = false;
         }
+        break;
     }
 
     // notify the result
@@ -966,15 +1102,20 @@ static void _process_inference_result(oasis_lite_param_t *pParam)
 
     if (lock_oasis)
     {
-        pParam->run_flag = OASIS_RUN_FLAG_NUM;
-
         _oasis_timers_stop();
+#if ENABLE_FACEID_MODULE_MODE
+        _oasis_lite_reset_brightness(0);
+        pParam->run_flag = OASIS_RUN_FLAG_STOP;
+#else
+        _oasis_lite_reset_brightness(1);
+        pParam->run_flag = OASIS_RUN_FLAG_NUM;
 
         if (sln_timer_start("RegisterResult", RESULT_TIMER, 0, _oasis_timer_result, (void *)pParam,
                             &pParam->pResultTimer))
         {
             OASIS_LOGE("Failed to start \"RegisterResult\" timer.");
         }
+#endif
         return;
     }
 }
@@ -987,7 +1128,7 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_Init(vision_algo_dev_t *de
     OASIS_LOGI("++HAL_VisionAlgoDev_OasisLite_Init");
     OASISLTResult_t oasisRet = OASISLT_OK;
 
-    FaceRecRtInfo_Init((unsigned char *)RT_INFO_REGION_START, RT_INFO_REGION_SIZE, _FaceRecRtInfo_Log);
+//    FaceRecRtInfo_Init((unsigned char *)RT_INFO_REGION_START, RT_INFO_REGION_SIZE, _FaceRecRtInfo_Log);
 
     s_OasisLite.dev = dev;
 
@@ -995,7 +1136,7 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_Init(vision_algo_dev_t *de
     memset(&dev->cap, 0, sizeof(dev->cap));
     dev->cap.callback = callback;
 
-    dev->data.autoStart                             = 1;
+    dev->data.autoStart                             = FACE_REC_AUTO_START;
     dev->data.frames[kVAlgoFrameID_IR].height       = OASIS_FRAME_HEIGHT;
     dev->data.frames[kVAlgoFrameID_IR].width        = OASIS_FRAME_WIDTH;
     dev->data.frames[kVAlgoFrameID_IR].pitch        = OASIS_FRAME_WIDTH * 3;
@@ -1064,6 +1205,9 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_Init(vision_algo_dev_t *de
 #else
     s_OasisLite.config.enableFlags = OASIS_ENABLE_LIVENESS;
 #endif
+#if FEATURE_TEMPLATE_STRESS_TEST
+    s_OasisLite.config.enableFlags |= OASIS_ENABLE_DUP_FACE_REGISTRATION;
+#endif
     s_OasisLite.config.falseAcceptRate = OASIS_FAR_1_100000;
     s_OasisLite.config.height          = OASIS_FRAME_HEIGHT;
     s_OasisLite.config.width           = OASIS_FRAME_WIDTH;
@@ -1072,7 +1216,8 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_Init(vision_algo_dev_t *de
     s_OasisLite.config.fastMemSize     = DTC_OPTIMIZE_BUFFER_SIZE;
     s_OasisLite.config.fastMemBuf      = (char *)s_DTCOPBuf;
 
-    s_OasisLite.run_flag    = OASIS_DET_REC;
+    s_OasisLite.run_flag = dev->data.autoStart ? OASIS_DET_REC : OASIS_RUN_FLAG_STOP;
+
     s_OasisLite.prevRunFlag = OASIS_RUN_FLAG_NUM;
 
     // Get the face recognition threshold
@@ -1083,6 +1228,8 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_Init(vision_algo_dev_t *de
         ((faceRecThreshold >= MINIMUM_FACE_REC_THRESHOLD) && (faceRecThreshold <= MAXIMUM_FACE_REC_THRESHOLD)))
     {
         s_OasisLite.config.runtimePara.recogTH = faceRecThreshold/1000.0f;
+        s_OasisLite.config.runtimePara.brightnessTH[0] = 80;
+        s_OasisLite.config.runtimePara.brightnessTH[1] = 180;
     }
 
     oasisRet = OASISLT_init(&s_OasisLite.config);
@@ -1132,9 +1279,10 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_Init(vision_algo_dev_t *de
         ret = kStatus_HAL_ValgoInitError;
         return ret;
     }
-
-    _oasis_start_recognition(&s_OasisLite);
-
+    if (dev->data.autoStart)
+    {
+        _oasis_start_recognition(&s_OasisLite);
+    }
     OASIS_LOGD("[OASIS]:Init ok");
     OASIS_LOGI("--HAL_VisionAlgoDev_OasisLite_Init");
     return ret;
@@ -1177,6 +1325,7 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_Run(const vision_algo_dev_
 
     if (s_OasisLite.run_flag != OASIS_RUN_FLAG_NUM && s_OasisLite.run_flag != OASIS_RUN_FLAG_STOP)
     {
+#if !ENABLE_FACEID_MODULE_MODE
         // clear the result
         memset(&s_OasisLite.result, 0, sizeof(s_OasisLite.result));
         s_OasisLite.result.id = kVisionAlgoID_OasisLite;
@@ -1193,7 +1342,7 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_Run(const vision_algo_dev_
         {
             s_OasisLite.result.oasisLite.state = kOASISLiteState_DeRegistration;
         }
-
+#endif
         FWK_Profiler_ClearEvents();
 
 #ifdef PROFILER_STATIC_FRAME
@@ -1244,6 +1393,18 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_InputNotify(const vision_a
 
     switch (eventBase.eventId)
     {
+        case kEventFaceRecID_StartRec:
+        {
+            _oasis_start_recognition(&s_OasisLite);
+        }
+        break;
+
+        case kEventFaceRecID_StopRec:
+        {
+            _oasis_stop_recognition(&s_OasisLite);
+        }
+        break;
+
         case kEventFaceRecID_AddUser:
         {
             event_face_rec_t event = *(event_face_rec_t *)data;
@@ -1258,11 +1419,19 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_InputNotify(const vision_a
                 /* If registration currently in progress stop it */
                 if (s_OasisLite.run_flag == OASIS_DET_REC_REG)
                 {
+#if !ENABLE_FACEID_MODULE_MODE
                     _oasis_start_recognition(&s_OasisLite);
                     break;
+#endif
                 }
             }
             _oasis_start_registration(&s_OasisLite);
+        }
+        break;
+
+        case kEventFaceRecID_AddUserStop:
+        {
+            _oasis_stop_registration(&s_OasisLite);
         }
         break;
 
@@ -1304,14 +1473,22 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_InputNotify(const vision_a
             {
                 if (s_OasisLite.run_flag == OASIS_DET_REC_DEREG)
                 {
+#if !ENABLE_FACEID_MODULE_MODE
                     /* If deregistration currently in progress stop it */
                     _oasis_start_recognition(&s_OasisLite);
+#endif
                 }
                 else
                 {
                     _oasis_start_deregistration(&s_OasisLite);
                 }
             }
+        }
+        break;
+
+        case kEventFaceRecID_DelUserStop:
+        {
+            _oasis_stop_deregistration(&s_OasisLite);
         }
         break;
 
@@ -1323,7 +1500,7 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_InputNotify(const vision_a
 
             if (remoteEvt.dataLen == OASISLT_getFaceItemSize() + sizeof(remoteEvt.regData->name))
             {
-                if (remoteEvt.isReRegister)
+                if (remoteEvt.flag == 1) // update
                 {
                     /* find id by name */
                     int count         = facedb_get_count();
@@ -1341,6 +1518,29 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_InputNotify(const vision_a
                     }
 
                     vPortFree(faceIds);
+                }
+                else if (remoteEvt.flag == 2) // allow dup reg
+                {
+                    facedb_status_t status;
+                    int faceItemSize = OASISLT_getFaceItemSize();
+                    uint16_t newFaceId;
+                    status              = HAL_Facedb_GenId(&newFaceId);
+                    s_UserNameReference = (remoteEvt.regData->name[0] == '\0') ? NULL : remoteEvt.regData->name;
+
+                    if ((status == kFaceDBStatus_Success) && (newFaceId != INVALID_FACE_ID))
+                    {
+                        res.result = HAL_Facedb_AddFace(newFaceId, s_UserNameReference, remoteEvt.regData->facedata,
+                                                        faceItemSize);
+                        if (status == kFaceDBStatus_Success)
+                        {
+                            res.name   = HAL_Facedb_GetName(newFaceId);
+                            res.result = 0;
+                        }
+                    }
+                    else if (status == kFaceDBStatus_Full)
+                    {
+                        OASIS_LOGE("OASIS: database is full.");
+                    }
                 }
                 else
                 {
@@ -1422,7 +1622,21 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_InputNotify(const vision_a
             }
         }
         break;
-
+        case kEventFaceRecID_GetUserFeature:
+        {
+            event_face_rec_t event = *(event_face_rec_t *)data;
+            fea_read_event_t fea   = event.feaRead;
+            facedb_status_t ret    = HAL_Facedb_GetFace(fea.id, &fea.face_data);
+            if (ret == kFaceDBStatus_Success)
+            {
+                _oasis_lite_dev_response(eventBase, &fea, kEventStatus_Ok, true);
+            }
+            else
+            {
+                _oasis_lite_dev_response(eventBase, &fea, kEventStatus_Error, true);
+            }
+        }
+        break;
         case kEventFaceRecID_GetUserCount:
         {
             int count = facedb_get_count();
@@ -1536,7 +1750,7 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_InputNotify(const vision_a
         case kEventFaceRecID_OasisGetState:
         {
             event_face_rec_t oasisEvent;
-			if (s_OasisLite.run_flag == OASIS_RUN_FLAG_STOP)
+            if (s_OasisLite.run_flag == OASIS_RUN_FLAG_STOP)
             {
                 oasisEvent.oasisState.state = kOasisState_Stopped;
             }
@@ -1584,7 +1798,7 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_InputNotify(const vision_a
                     /* start the oasis */
                     _clear_blocker_bit(kOasisBlockingList_UserInput);
                     oasis_status_t status = _oasis_start(receiver);
-                    if(status == kOasis_Failed)
+                    if (status == kOasis_Failed)
                     {
                         oasisResponse.oasisState.state = kOasisState_Stopped;
                         _oasis_lite_dev_response(eventBase, &oasisResponse, kEventStatus_Error, true);
@@ -1601,6 +1815,23 @@ static hal_valgo_status_t HAL_VisionAlgoDev_OasisLite_InputNotify(const vision_a
                     _oasis_lite_dev_response(eventBase, &oasisResponse, kEventStatus_Error, true);
                 }
             }
+        }
+        break;
+
+        case kEventFaceRecID_CapImage:
+        {
+            image_info_event_t imageInfo;
+            imageInfo.width  = s_OasisLite.pframes[OASISLT_INT_FRAME_IDX_IR]->width;
+            imageInfo.height = s_OasisLite.pframes[OASISLT_INT_FRAME_IDX_IR]->height;
+            imageInfo.format = IMAGE_FORMAT_GRAY888;
+            imageInfo.data   = s_OasisLite.pframes[OASISLT_INT_FRAME_IDX_IR]->data;
+            _oasis_lite_dev_response(eventBase, &imageInfo, kEventStatus_Ok, true);
+
+            imageInfo.width  = s_OasisLite.pframes[OASISLT_INT_FRAME_IDX_3D]->width;
+            imageInfo.height = s_OasisLite.pframes[OASISLT_INT_FRAME_IDX_3D]->height;
+            imageInfo.format = IMAGE_FORMAT_RAW16;
+            imageInfo.data   = s_OasisLite.pframes[OASISLT_INT_FRAME_IDX_3D]->data;
+            _oasis_lite_dev_response(eventBase, &imageInfo, kEventStatus_Ok, true);
         }
         break;
 

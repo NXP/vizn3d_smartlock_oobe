@@ -1,40 +1,10 @@
-Release Name: MCUXpresso Software Development Kit (SDK)
-Release Version: 2.9.1
-Package License: LA_OPT_NXP_Software_License.txt - Additional Distribution use, section 2.3 applies
-NXP Product: NXP’s product with a part number of MIMXRT117HDVMAA or NXP’s product included in the NXP evaluation kit with a part number of SLN-VIZN3D-IOT
-
-SDK_Peripheral_Driver      Name: SDK Peripheral Driver                       
-                           Version: 2.x.x                                    
-                           Outgoing License: BSD-3-Clause                    
-                           License File: COPYING-BSD-3                       
-                           Format: source code                               
-                           Description: Peripheral drivers are designed for  
-                           the most common use cases identified for the      
-                           underlying hardware block.                        
-                           Location: devices/<device>/drivers                
-                           Origin: NXP (BSD-3-Clause)                        
-
-SDK_Examples               Name: SDK examples                                
-                           Version: NA                                       
-                           Outgoing License: BSD-3-Clause                    
-                           License File: COPYING-BSD-3                       
-                           Format: source code, binary, project files, linker
-                           files                                             
-                           Description: SDK out of box examples to show how  
-                           to use peripheral drivers and integrate           
-                           middleware.                                       
-                           Location: boards/<board>/                         
-                           Origin: NXP (BSD-3-Clause)                        
-
-SDK_Device                 Name: SDK SoC files                               
-                           Version: NA                                       
-                           Outgoing License: BSD-3-Clause                    
-                           License File: COPYING-BSD-3                       
-                           Format: source code, linker files                 
-                           Description: Device system files, template files, 
-                           IDE related startup and linker files.             
-                           Location: devices/<device>/                       
-                           Origin: NXP (BSD-3-Clause)                        
+Release Name: SLN-VIZN3D-IOT Software Development Kit
+Release Version: 1.4.0
+Outgoing license: LA_OPT_NXP_Software_License v49 September 2023 - Additional Distribution use, section 2.3 applies
+License file: LICENSE.txt
+Release location : https://github.com/NXP/vizn3d_smartlock_oobe
+Description: NXP’s product with a part number of MIMXRT117HDVMAA or NXP’s product included in the NXP evaluation kit with a part number of SLN-VIZN3D-IOT
+Origin : NXP (Proprietary)
 
 cmsis                      Name: CMSIS                                       
                            Version: 5.6.0                                    
@@ -49,37 +19,6 @@ cmsis                      Name: CMSIS
                            Origin: ARM (Apache-2.0) -                        
                            https://github.com/ARM-software/CMSIS_5/releases/t
                            ag/5.6.0                                          
-
-cmsis_gpio                 Name: CMSIS GPIO Interface                        
-                           Version: 2.0.0                                    
-                           Outgoing License: BSD-3-Clause                    
-                           License File: COPYING-BSD-3                       
-                           Format: source code                               
-                           Description: CMSIS Driver style GPIO interface    
-                           definition created by NXP.                        
-                           Location: CMSIS/Driver/Include/Driver_GPIO.h      
-                           Origin: NXP (BSD-3-Clause)                        
-
-SDK_Components             Name: SDK components and board peripheral drivers 
-                           Version: NA                                       
-                           Outgoing License: BSD-3-Clause                    
-                           License File: COPYING-BSD-3                       
-                           Format: source code                               
-                           Description: SDK components and board peripheral  
-                           drivers, for example, flash and codec drivers.    
-                           Location: components/                             
-                           Origin: NXP (BSD-3-Clause)                        
-
-usb                        Name: USB                                         
-                           Version: 2.7.0                                    
-                           Outgoing License: BSD-3-Clause                    
-                           License File: COPYING-BSD-3                       
-                           Format: source code                               
-                           Description: NXP USB stack. This is a version of  
-                           the USB stack that has been integrated with the   
-                           MCUXpresso SDK.                                   
-                           Location: middleware/usb                          
-                           Origin: NXP (BSD-3-Clause)                        
 
 freertos                   Name: FreeRTOS                                    
                            Version: 202007.00.0                              
@@ -108,40 +47,6 @@ FreeRTOS_heap_newlib       Name: FreeRTOS Newlib helper
                            http://www.nadler.com/embedded/newlibAndFreeRTOS.h
                            tml                                               
 
-sdmmc                      Name: SD MMC SDIO Card middleware                 
-                           Version: 2.2.7                                    
-                           Outgoing License: BSC-3-Clause                    
-                           License File: COPYING-BSD-3                       
-                           Format: source code                               
-                           Description: A software component support SD card,
-                           eMMC card, SDIO card.                             
-                           Location: middleware/sdmmc                        
-                           Origin: NXP (BSD-3-Clause)                        
-
-mmcau                      Name: mmCAU S/W Library                           
-                           Version: 2.0.1                                    
-                           Outgoing License: BSD-3-Clause                    
-                           License File: COPYING-BSD-3                       
-                           Format: source code                               
-                           Description: S/W library that works with the      
-                           memory-mapped cryptographic acceleration unit     
-                           present on some MCUXpresso SoCs                   
-                           Location: middleware/mmcau                        
-                           Origin: NXP (BSD-3-Clause)                        
-
-fatfs                      Name: FatFs                                       
-                           Version: 0.14                                     
-                           Outgoing License: FatFs License                   
-                           License File: middleware/fatfs/LICENSE.txt        
-                           Format: source code                               
-                           Description: Generic FAT file system for small    
-                           embedded devices.                                 
-                           Location: middleware/fatfs                        
-                           Origin: Electronic Lives Mfg. by ChaN of Ageo     
-                           city, Japan (FatFs License)                       
-                           Approved open source license: Yes                 
-                           Url: http://elm-chan.org/fsw/ff/00index_e.html    
-
 mbedtls                    Name: Mbed TLS                                    
                            Version: 2.16.6                                   
                            Outgoing License: Apache-2.0                      
@@ -165,18 +70,6 @@ lwip                       Name: lwIP TCP/IP Stack
                            Origin: Swedish Institute of Computer Science     
                            Url: http://savannah.nongnu.org/projects/lwip     
 
-cmsis_drivers              Name: SDK CMSIS Peripheral Drivers                
-                           Version: 2.x.x                                    
-                           Outgoing License: Apache License 2.0              
-                           License File: CMSIS/LICENSE.txt                   
-                           Format: source code                               
-                           Description: CMSIS Peripheral drivers are designed
-                           to provide hardware independent APIs which make   
-                           application reusable across a wide range of       
-                           supported microcontroller devices.                
-                           Location: devices/<device>/cmsis_drivers          
-                           Origin: NXP (Apache License 2.0)                  
-
 LittleFS                   Name: LittleFS                                    
                            Version: 2.2.1                                    
                            Outgoing License: BSD-3-Clause                    
@@ -188,27 +81,6 @@ LittleFS                   Name: LittleFS
                            Origin: Christopher Haster                        
                            (https://github.com/geky/)                        
                            Url: https://github.com/littlefs-project/littlefs 
-
-sln_iot_common_platform    Name: IoT Solutions Common Platform               
-                           Version: 1.0.1                                    
-                           Outgoing License: Apache 2.0, BSD-3, MIT, &       
-                           Proprietary. See LA_OPT_NXP_Software_License.txt  
-                           License File: LA_OPT_NXP_Software_License.txt     
-                           Format: Source                                    
-                           Description: Common code for IoT Solutions        
-                           Location: middleware/sln_iot_platform             
-                           Origin: NXP                                       
-
-oasis                      Name: IoT Solution Oasis Library                  
-                           Version: 4.82.0 / 1.47.0
-                           Outgoing License: Proprietary                     
-                           License File: LA_OPT_NXP_Software_License.txt     
-                           Format: object code & header files                
-                           Description: Oasis library which does face        
-                           detection and recognition with enhanced security, 
-                           compiled for M7.                                  
-                           Location: middleware/oasis                        
-                           Origin: NXP                                       
 
 orbbec_camera              Name: Orbbec camera 3d drivers middleware         
                            Version: 1.0.1                                    

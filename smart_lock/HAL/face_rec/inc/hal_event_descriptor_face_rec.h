@@ -22,11 +22,17 @@
 typedef enum _event_face_rec_id
 {
     kEventFaceRecID_AddUser = kEventType_FaceRec,
+    kEventFaceRecID_AddUserStop,
     kEventFaceRecID_AddUserRemote,
     kEventFaceRecID_DelUser,
+    kEventFaceRecID_DelUserStop,
+    kEventFaceRecID_StartRec,
+    kEventFaceRecID_StopRec,
     kEventFaceRecID_DelUserAll,
     kEventFaceRecID_GetUserList,
     kEventFaceRecID_GetUserCount,
+    kEventFaceRecID_GetUserFeature,
+    kEventFaceRecID_CapImage,
 
     kEventFaceRecID_RenameUser,
     kEventFaceRecID_UpdateUserInfo,
@@ -54,6 +60,21 @@ typedef struct _user_info_event
     face_user_info_t *userInfo;
     uint16_t count;
 } user_info_event_t;
+
+typedef enum _image_format
+{
+    IMAGE_FORMAT_GRAY888,
+    IMAGE_FORMAT_BGR888,
+    IMAGE_FORMAT_RAW16,
+} image_format_t;
+
+typedef struct _image_info_event
+{
+    short height;
+    short width;
+    image_format_t format;
+    unsigned char *data;
+} image_info_event_t;
 
 typedef struct _wuart_event
 {
@@ -91,6 +112,12 @@ typedef struct _remote_reg_data_t
     uint8_t facedata[0];
 } remote_reg_data_t;
 
+typedef struct _fea_read_event_t
+{
+    uint16_t id;
+    uint8_t *face_data;
+} fea_read_event_t;
+
 typedef struct _remote_reg_result_t
 {
     uint8_t result;
@@ -99,7 +126,7 @@ typedef struct _remote_reg_result_t
 
 typedef struct _remote_reg_event_t
 {
-    uint32_t isReRegister;
+    uint8_t flag; // 0: normal reg, 1: update, 2: allow dup-reg
     uint32_t dataLen;
     remote_reg_data_t *regData;
 } remote_reg_event_t;
@@ -136,6 +163,7 @@ typedef struct _event_face_rec
         wuart_event_t wuart;
         faceRecThreshold_event_t faceRecThreshold;
         oasis_state_event_t oasisState;
+        fea_read_event_t feaRead;
     };
 } event_face_rec_t;
 

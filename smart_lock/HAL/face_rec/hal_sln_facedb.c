@@ -64,7 +64,7 @@ typedef struct _facedb_metadata
 {
     uint32_t featureVersion;
     uint32_t modelVersion;
-    uint8_t numberFaces;
+    uint16_t numberFaces;
     uint16_t faceEntrySize;
     /* RESERVED DATA for future updates */
     uint8_t reservedData[RESERVED_DATA];
@@ -142,7 +142,7 @@ static void _Facedb_GeneratePathFromIndex(uint16_t id, char *path)
 {
     if (path != NULL)
     {
-        char index[4];
+        char index[8];
         itoa(id, index, 10);
         strcpy(path, OASIS_FACEDATABASE);
         strcat(path, index);
@@ -183,6 +183,7 @@ static sln_flash_status_t _Facedb_Load()
 {
     sln_flash_status_t status = kStatus_HAL_FlashSuccess;
     bool updateMetadata       = false;
+    LOGD("+++Facedb: _Facedb_Load.");
 
     for (uint16_t id = 0; id < MAX_FACE_DB_SIZE; id++)
     {
@@ -250,7 +251,7 @@ static sln_flash_status_t _Facedb_Load()
     {
         _Facedb_UpdateMetadata();
     }
-
+    LOGD("---Facedb: _Facedb_Load.");
     return status;
 }
 
@@ -329,6 +330,7 @@ static sln_flash_status_t _Facedb_SaveFace(uint16_t id)
 
     /* Save in a file */
     char path[20];
+    memset(path,0,sizeof(path));
     _Facedb_GeneratePathFromIndex(id, path);
 
     status = FWK_Flash_Save(path, (FACE_ENTRY(id)), s_FaceEntrySize);
@@ -474,15 +476,14 @@ facedb_status_t HAL_Facedb_Init(uint16_t featureSize)
         }
         else
         {
-            s_FaceDBSize = (featureSize + FACE_NAME_MAX_LEN) * MAX_FACE_DB_SIZE;
+        	s_FaceEntrySize = featureSize + sizeof(((facedb_entry_t *)0)->name);
+            s_FaceDBSize = s_FaceEntrySize * MAX_FACE_DB_SIZE;
             s_FaceDB     = pvPortMalloc(s_FaceDBSize);
-
             if (NULL == s_FaceDB)
             {
                 LOGE("Facedb: Failed to allocate face DB buffer");
                 status = kFaceDBStatus_NotEnoughMemory;
             }
-            s_FaceEntrySize = featureSize + sizeof(((facedb_entry_t *)0)->name);
         }
     }
 
@@ -599,8 +600,8 @@ facedb_status_t HAL_Facedb_AddFace(uint16_t id, char *name, void *face, int size
             }
             else
             {
-                sprintf(faceEntry->name, "user_%03d", id);
-                faceEntry->name[FACE_NAME_MAX_LEN - 1] = 0;
+                sprintf(faceEntry->name, "user_%04d", id);
+                faceEntry->name[FACE_NAME_MAX_LEN] = 0;
             }
 
             memcpy(faceEntry->face, face, size);
@@ -1002,7 +1003,7 @@ facedb_status_t HAL_Facedb_UpdateFace(uint16_t id, char *name, void *face, int s
 facedb_status_t HAL_Facedb_GetIds(uint16_t *face_ids)
 {
     facedb_status_t ret = kFaceDBStatus_Success;
-    uint8_t index       = 0;
+    uint16_t index       = 0;
 
     if ((s_FaceDB == NULL) || (s_FaceDBLock == NULL))
     {

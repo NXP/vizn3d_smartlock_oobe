@@ -82,15 +82,17 @@
 #define FICA_IMG_RESERVED_SIZE (0x00000000) /* 0   MB - toolbox - deprecated */
 #define FICA_IMG_APP_A_SIZE    (0x00680000) /* 6.5   MB */
 #define FICA_IMG_APP_B_SIZE    (0x00680000) /* 6.5   MB */
+//To support 200 templates
+#define FICA_FILE_SYS_SIZE     (0x100000)
 
 #else
 /* FLASH_SIZE >= 32MB */
 #define FICA_IMG_RESERVED_SIZE (0x00000000) /* 0  MB - toolbox - deprecated */
-#define FICA_IMG_APP_A_SIZE    (0x00A00000) /* 10 MB */
-#define FICA_IMG_APP_B_SIZE    (0x00A00000) /* 10 MB */
+#define FICA_IMG_APP_A_SIZE    (0x00800000) /* 8 MB */
+#define FICA_IMG_APP_B_SIZE    (0x00800000) /* 8 MB */
+//To support 3000 templates, this size should > 12M
+#define FICA_FILE_SYS_SIZE     (0xD00000)   /*13 MB */
 #endif
-
-#define FICA_FILE_SYS_SIZE      (0x100000)
 #define FICA_CRYPTO_BACKUP_SIZE (FLASH_SECTOR_SIZE)
 #define FICA_TABLE_SIZE         (FLASH_SECTOR_SIZE)
 

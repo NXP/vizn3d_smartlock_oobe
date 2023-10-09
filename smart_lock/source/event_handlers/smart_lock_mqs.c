@@ -99,7 +99,7 @@ static void _Vision_InferCompleteDecode(vision_algo_result_t *pInferResult, void
             *len   = FAKE_FACE_AUDIO_LEN;
         }
         /* check the non frontal alert */
-        else if (pOasisResult->qualityCheck == kOasisLiteQualityCheck_NonFrontalFace)
+        else if (pOasisResult->qualityCheck == kOasisLiteQualityCheck_SideFace)
         {
             *audio = look_at_the_camera_audio;
             *len   = LOOK_AT_THE_CAMERA_AUDIO_LEN;

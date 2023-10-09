@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 NXP.
+ * Copyright 2021 - 2023 NXP.
  * This software is owned or controlled by NXP and may only be used strictly in accordance with the
  * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -13,7 +13,7 @@
 #include "stdint.h"
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 82
+#define VERSION_MINOR 92
 /* This version number only used for hot fix on frozen release or branch */
 #define VERSION_HOTFIX 0
 
@@ -42,6 +42,14 @@ enum {
 
     OASIS_ENABLE_INVALID                 = 0xFF
 };
+
+typedef enum {
+    OASIS_LIVENESS_IR_2D = 1U << 0,    // IR liveness check for 2D anti-spoofing
+    OASIS_LIVENESS_RGB = 1U << 1,      // RGB liveness check
+    OASIS_LIVENESS_IR_3D = 1U << 2,    // IR liveness check for 3D anti-spoofing
+    OASIS_LIVENESS_DEPTH_2D = 1U << 3, // Depth liveness check for 2D anti-spoofing
+    OASIS_LIVENESS_INVALID = 0xFF
+} OASISLivenessFlag_t;
 
 typedef enum {
     OASISLT_OK = 0,
@@ -128,6 +136,9 @@ typedef enum {
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_DARK,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_OVEREXPOSURE,//10
     OASIS_QUALITY_RESULT_FACE_WITH_MASK,
+    OASIS_QUALITY_RESULT_SPECKLE_DISORDER,
+    OASIS_QUALITY_RESULT_IR_DISORDER,
+    OASIS_QUALITY_RESULT_SPECKLE_NEAR_BORDER,
     OASIS_QUALITY_RESULT_INVALID = 0xFF
 } OASISLTFaceQualityRes_t;
 
@@ -183,6 +194,13 @@ typedef enum {
     OASIS_IMG_TYPE_INVALID = 0xFF
 } OASISLTImageType_t;
 
+typedef enum {
+    OASIS_TEMPLATE_TYPE_PREPROCESSED,
+    OASIS_TEMPLATE_TYPE_PREPROCESSED_SUBPIXEL,
+    OASIS_TEMPLATE_TYPE_NUM,
+    OASIS_TEMPLATE_TYPE_INVALID = 0xFF
+} OASISLTTemplateType_t;
+
 /*idx of input frames*/
 enum {
     OASISLT_INT_FRAME_IDX_RGB,
@@ -206,9 +224,12 @@ enum {
     OASISLT_LM_IDX_NUM
 };
 
+#define OASISLT_LM106_IDX_NUM   212
+
 typedef struct _FaceBox {
     int rect[4];                   // left, top, right, bottom.
-    float fld[OASISLT_LM_IDX_NUM]; // 5 landmark point.
+    float fld[OASISLT_LM_IDX_NUM]; // 5 landmark points.
+    float fld106[OASISLT_LM106_IDX_NUM]; // 106 landmark points.
 } FaceBox_t;
 
 typedef struct {
@@ -451,6 +472,11 @@ typedef struct {
 
     OASISLTImageType_t imgType;
 
+    /* Check if the 3D frame is Depth16 or Speckle16, when using 3D imgType. */
+    uint8_t isSpeckle;
+    OASISLTTemplateType_t templateType;
+    uint8_t* speckleTemplate;
+
     /* minFace should not smaller than 40 */
     int minFace;
 
@@ -472,6 +498,9 @@ typedef struct {
 
     /* What functions should be enabled in OASIS LIB */
     uint8_t enableFlags;
+
+    /* Select liveness types, when liveness is enabled. */
+    OASISLivenessFlag_t livenessTypes;
 
     /* False accept rate */
     OASISLTFar_t falseAcceptRate;
@@ -616,6 +645,16 @@ int OASISLT_util_resize(const unsigned char* src, int srcw, int srch,
                         unsigned char* dst, int dstw, int dsth,
                         OASISLTImageFormat_t fmt, void* tmpBuf);
 
+/*Generate template data.
+* @params:   target[input/output]: the speckle template raw data and output data.
+*            tmpBuf[input]: the temporary buffer.
+*            width[input]: the width of speckleTemplate
+*            height[input]: the height of speckleTemplate
+* @return:   > 0: the size of temporary buffer required if tmp_buf is NULL.
+*                 Or, the size of final template data if tmp_buf is not NULL.
+*            < 0: if there are some errors.
+**/
+int OASISLT_gen_speckleTmpl(uint8_t* target, const int width, const int height, uint8_t* tmpBuf);
 
 #ifdef __cplusplus
 }
